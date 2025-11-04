@@ -116,7 +116,9 @@ export const PMAY_CRITERIA: Record<string, PMAYCriteria> = {
     EWS: {
         minIncome: 0,
         maxIncome: 300000, // ₹3 lakh
-        maxPropertyValue: 4500000, // ₹45 lakh (metro cities) - Updated to match actual PMAY guidelines
+        // Note: Metro cities ₹45L, Non-metro ₹30L. Using metro limit as default.
+        // Verify with official PMAY-CLSS guidelines: https://pmaymis.gov.in/
+        maxPropertyValue: 4500000, // ₹45 lakh (metro cities)
         maxCarpetArea: 30, // sq meters
         subsidyRate: 0.065, // 6.5%
         maxLoanForSubsidy: 600000, // ₹6 lakh
@@ -124,7 +126,9 @@ export const PMAY_CRITERIA: Record<string, PMAYCriteria> = {
     LIG: {
         minIncome: 300001,
         maxIncome: 600000, // ₹6 lakh
-        maxPropertyValue: 4500000, // ₹45 lakh (metro cities) - Updated to match actual PMAY guidelines
+        // Note: Metro cities ₹45L, Non-metro ₹30L. Using metro limit as default.
+        // Verify with official PMAY-CLSS guidelines: https://pmaymis.gov.in/
+        maxPropertyValue: 4500000, // ₹45 lakh (metro cities)
         maxCarpetArea: 60, // sq meters
         subsidyRate: 0.065, // 6.5%
         maxLoanForSubsidy: 600000, // ₹6 lakh
