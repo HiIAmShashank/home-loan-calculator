@@ -10,7 +10,7 @@ import type { PMAYCriteria } from './types';
 // ============================================================================
 
 export const STAMP_DUTY_RATES: Record<string, { men: number; women: number }> = {
-    Maharashtra: { men: 0.06, women: 0.04 }, // Mumbai has additional 1% metro cess
+    Maharashtra: { men: 0.06, women: 0.04 }, // Note: Mumbai may have additional metro cess - verify locally
     Karnataka: { men: 0.056, women: 0.056 },
     Delhi: { men: 0.06, women: 0.04 },
     TamilNadu: { men: 0.07, women: 0.07 },
@@ -116,7 +116,7 @@ export const PMAY_CRITERIA: Record<string, PMAYCriteria> = {
     EWS: {
         minIncome: 0,
         maxIncome: 300000, // ₹3 lakh
-        maxPropertyValue: 600000, // ₹6 lakh
+        maxPropertyValue: 4500000, // ₹45 lakh (metro cities) - Updated to match actual PMAY guidelines
         maxCarpetArea: 30, // sq meters
         subsidyRate: 0.065, // 6.5%
         maxLoanForSubsidy: 600000, // ₹6 lakh
@@ -124,7 +124,7 @@ export const PMAY_CRITERIA: Record<string, PMAYCriteria> = {
     LIG: {
         minIncome: 300001,
         maxIncome: 600000, // ₹6 lakh
-        maxPropertyValue: 600000, // ₹6 lakh
+        maxPropertyValue: 4500000, // ₹45 lakh (metro cities) - Updated to match actual PMAY guidelines
         maxCarpetArea: 60, // sq meters
         subsidyRate: 0.065, // 6.5%
         maxLoanForSubsidy: 600000, // ₹6 lakh
