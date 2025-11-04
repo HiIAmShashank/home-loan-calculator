@@ -40,7 +40,8 @@ export function calculateStampDuty(
     const stateRates = STAMP_DUTY_RATES[state];
 
     if (!stateRates) {
-        // Default to 5% if state not found
+        // Log warning when using default rate for unlisted states
+        console.warn(`Stamp duty rates not found for state: ${state}. Using default 5% rate. Please verify with local authorities.`);
         return Math.round(propertyValue * 0.05);
     }
 

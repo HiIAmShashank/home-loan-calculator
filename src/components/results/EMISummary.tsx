@@ -17,42 +17,46 @@ interface EMISummaryProps {
 }
 
 function EMISummaryComponent({ loanInputs, showDetailedBreakdown = true }: EMISummaryProps) {
-    // Validate inputs
-    if (!loanInputs || loanInputs.loanAmount <= 0) {
-        return <ErrorMessage message="Invalid loan amount. Please check your inputs." type="error" />;
-    }
-
+    // All hooks must be called before any conditional returns
     const emi = useMemo(() => {
+        if (!loanInputs || loanInputs.loanAmount <= 0) return 0;
         try {
             return calculateEMI(loanInputs.loanAmount, loanInputs.interestRate, loanInputs.loanTenure);
         } catch (error) {
             console.error('EMI calculation error:', error);
             return 0;
         }
-    }, [loanInputs.loanAmount, loanInputs.interestRate, loanInputs.loanTenure]);
+    }, [loanInputs]);
 
     const totalInterest = useMemo(() => {
+        if (!loanInputs || loanInputs.loanAmount <= 0) return 0;
         try {
             return calculateTotalInterest(loanInputs.loanAmount, loanInputs.interestRate, loanInputs.loanTenure);
         } catch (error) {
             console.error('Interest calculation error:', error);
             return 0;
         }
-    }, [loanInputs.loanAmount, loanInputs.interestRate, loanInputs.loanTenure]);
+    }, [loanInputs]);
 
     const totalAmount = useMemo(() => {
+        if (!loanInputs || loanInputs.loanAmount <= 0) return 0;
         try {
             return calculateTotalAmount(loanInputs.loanAmount, loanInputs.interestRate, loanInputs.loanTenure);
         } catch (error) {
             console.error('Total amount calculation error:', error);
             return 0;
         }
-    }, [loanInputs.loanAmount, loanInputs.interestRate, loanInputs.loanTenure]);
+    }, [loanInputs]);
 
-    const interestPercentage = useMemo(
-        () => (totalInterest / loanInputs.loanAmount) * 100,
-        [totalInterest, loanInputs.loanAmount]
-    );
+    const interestPercentage = useMemo(() => {
+        if (!loanInputs || loanInputs.loanAmount <= 0 || totalInterest === 0) return 0;
+        return (totalInterest / loanInputs.loanAmount) * 100;
+    }, [totalInterest, loanInputs]);
+
+    // Now validate inputs after all hooks have been called
+    if (!loanInputs || loanInputs.loanAmount <= 0) {
+        return <ErrorMessage message="Invalid loan amount. Please check your inputs." type="error" />;
+    }
 
     if (emi === 0 && totalInterest === 0) {
         return <ErrorMessage message="Unable to calculate loan details. Please verify your inputs are valid." type="error" />;
