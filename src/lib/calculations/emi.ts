@@ -151,6 +151,14 @@ export function calculateLoanAmount(
  * Solve for N in EMI formula using logarithms:
  * N = log(EMI / (EMI - P×R)) / log(1 + R)
  * 
+ * @param principal - Loan amount in rupees
+ * @param emi - Monthly EMI amount in rupees
+ * @param annualRate - Annual interest rate in percentage
+ * @returns Number of months required to repay loan
+ * 
+ * @example
+ * calculateTenure(5000000, 60000, 9) // Returns ~120 months (10 years)
+ */
 export function calculateTenure(
     principal: number,
     emi: number,
@@ -165,14 +173,6 @@ export function calculateTenure(
     if (annualRate < 0) {
         throw new Error('Invalid input: Interest rate cannot be negative');
     }
-
-    const monthlyRate = annualRate / 12 / 100;
-export function calculateTenure(
-    principal: number,
-    emi: number,
-    annualRate: number
-): number {
-    if (principal <= 0 || emi <= 0) return 0;
 
     const monthlyRate = annualRate / 12 / 100;
 
