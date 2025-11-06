@@ -236,7 +236,6 @@ function LandingPage() {
                     </div>
                 </div>
             </section>
-
             {/* CTA Section - Modern with gradient */}
             <section className="relative px-4 sm:px-6 lg:px-8 py-20 sm:py-24 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 opacity-5"></div>

@@ -1,0 +1,197 @@
+GNU AFFERO GENERAL PUBLIC LICENSE WITH NON-COMMERCIAL CLAUSE
+Version 1.0
+
+Copyright (c) 2025 HiIAmShashank
+
+TERMS AND CONDITIONS
+
+1. DEFINITIONS
+
+"This License" refers to version 1.0 of the GNU Affero General Public License 
+with Non-Commercial Clause.
+
+"The Program" refers to any copyrightable work licensed under this License.
+
+"You" means an individual or legal entity exercising permissions granted by 
+this License.
+
+"Modify" means to copy from or adapt all or part of the work in a fashion 
+requiring copyright permission, other than the making of an exact copy.
+
+"Propagate" means to do anything with the Program that, without permission, 
+would make you directly or secondarily liable for infringement under applicable 
+copyright law.
+
+"Convey" means any kind of propagation that enables other parties to make or 
+receive copies.
+
+2. BASIC PERMISSIONS
+
+All rights granted under this License are granted for the term of copyright on 
+the Program, and are irrevocable provided the stated conditions are met. This 
+License explicitly affirms your unlimited permission to run the unmodified 
+Program for NON-COMMERCIAL purposes only.
+
+3. COPYLEFT
+
+You may copy, modify, and distribute the Program (or a work based on the 
+Program) in source code or object code form, provided that you meet all of the 
+following conditions:
+
+a) You must give any recipients of the Program or modified versions a copy of 
+   this License.
+
+b) You must cause any modified files to carry prominent notices stating that 
+   you changed the files and the date of any change.
+
+c) You must license the entire modified work, as a whole, under this License 
+   to anyone who comes into possession of a copy.
+
+d) You must make the complete source code of any modified version publicly 
+   available under this License. This includes making the source code available 
+   through a publicly accessible repository (such as GitHub, GitLab, or similar 
+   platform) or other publicly accessible means.
+
+4. ATTRIBUTION
+
+You must retain all copyright notices, license notices, and attribution to the 
+original author(s) in all copies or substantial portions of the Program. Any 
+modified version must clearly indicate:
+
+a) The original author(s) and source
+b) What modifications were made
+c) Who made the modifications
+d) When the modifications were made
+
+Proper attribution must be displayed prominently in:
+- The source code comments
+- The README or documentation
+- The user interface (if applicable)
+- Any distribution or publication of the modified work
+
+5. NON-COMMERCIAL USE ONLY
+
+The Program and any modifications thereof may NOT be used for commercial 
+purposes. "Commercial purposes" means:
+
+a) Selling the Program or any modified version thereof for a fee
+b) Using the Program or any modified version thereof in a commercial product 
+   or service that generates revenue
+c) Monetizing the Program or any modified version through advertisements, 
+   sponsorships, or any other revenue-generating mechanisms
+d) Incorporating the Program into a commercial product or service
+e) Using the Program to provide commercial services
+
+Educational use, personal use, and use by non-profit organizations for 
+non-profit purposes are explicitly permitted.
+
+6. SOURCE CODE AVAILABILITY
+
+If you convey a modified version of the Program, you must:
+
+a) Make the complete corresponding source code publicly available under this 
+   License
+b) Provide clear instructions on how to obtain the source code
+c) Ensure the source code remains publicly accessible for at least 3 years 
+   from the date of conveyance
+d) Include all scripts and information necessary to build and install the 
+   modified version
+
+The source code must be made available through a publicly accessible version 
+control repository or equivalent public hosting service.
+
+7. NETWORK USE
+
+If you run a modified version of the Program on a server or network service 
+that allows users to interact with it remotely, you must make the complete 
+source code of your modified version publicly available as described in 
+Section 6.
+
+8. NO WARRANTY
+
+THE PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED 
+OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE 
+QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU. SHOULD THE PROGRAM PROVE 
+DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+
+9. LIMITATION OF LIABILITY
+
+IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY 
+COPYRIGHT HOLDER BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, 
+INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE 
+THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED 
+INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE 
+PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS), EVEN IF SUCH HOLDER HAS BEEN 
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+10. TERMINATION
+
+Your rights under this License will terminate automatically if you fail to 
+comply with any of its terms. However, if you cease all violation of this 
+License, your rights are reinstated:
+
+a) Provisionally, unless and until the copyright holder explicitly and finally 
+   terminates your license
+b) Permanently, if the copyright holder fails to notify you of the violation 
+   by some reasonable means prior to 60 days after the cessation
+
+Termination of your rights under this Section does not terminate the licenses 
+of parties who have received copies or rights from you under this License.
+
+11. ACCEPTANCE
+
+You are not required to accept this License in order to receive or run a copy 
+of the Program. However, nothing other than this License grants you permission 
+to modify or distribute the Program or its derivative works. These actions are 
+prohibited by law if you do not accept this License. Therefore, by modifying 
+or distributing the Program (or any work based on the Program), you indicate 
+your acceptance of this License and all its terms and conditions.
+
+12. AUTOMATIC LICENSING
+
+Each time you redistribute the Program or any modified version, the recipient 
+automatically receives a license from the original licensor to copy, modify, 
+and distribute the Program subject to these terms and conditions.
+
+13. PATENTS
+
+If you convey the Program or any modified version, you grant a perpetual, 
+worldwide, non-exclusive, no-charge, royalty-free, irrevocable patent license 
+under any patent claims licensable by you that are necessarily infringed by 
+your contribution or the Program.
+
+14. ADDITIONAL TERMS
+
+You may not impose any further restrictions on the exercise of the rights 
+granted or affirmed under this License. For example, you may not impose a 
+license fee, royalty, or other charge for exercise of rights granted under 
+this License.
+
+END OF TERMS AND CONDITIONS
+
+---
+
+HOW TO APPLY THIS LICENSE TO YOUR MODIFICATIONS
+
+To apply this License to your modifications, attach the following notices to 
+the modified files:
+
+    Copyright (c) [year] [your name]
+    Modified version of Loanly - Home Loan Calculator
+    Original work copyright (c) 2025 HiIAmShashank
+    
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License with 
+    Non-Commercial Clause as published by the original author.
+    
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    
+    This program may NOT be used for commercial purposes.
+    
+    For the full license text, see the LICENSE file in the root directory.
+
+If your modifications are substantial, also include a CHANGELOG or MODIFICATIONS 
+file documenting your changes.

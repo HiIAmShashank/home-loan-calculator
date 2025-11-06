@@ -1,8 +1,20 @@
-# 🏠 Loanly - Home Loan Calculator
+# Loanly - Home Loan Calculator
 
 **"Because your mortgage shouldn't be a mystery"**
 
 A comprehensive, feature-rich home loan calculator built specifically for the Indian market. Calculate EMI, tax benefits, PMAY subsidy, prepayment scenarios, and total cost of ownership with support for Indian tax regulations and state-specific charges.
+
+## ⚠️ DISCLAIMER
+
+**THIS CALCULATOR IS FOR INFORMATIONAL AND EDUCATIONAL PURPOSES ONLY.**
+
+This tool does NOT constitute financial, legal, or tax advice. The calculations and results provided may contain errors or inaccuracies. Interest rates, tax laws, regulations, and lending policies are subject to change and vary by lender, location, and individual circumstances.
+
+Actual loan terms, EMI amounts, tax benefits, subsidies, and total costs may differ significantly from the estimates provided by this calculator.
+
+**IMPORTANT:** Always consult with qualified financial advisors, certified tax professionals, and lending institutions before making any financial decisions. Do not rely solely on this tool for financial planning or decision-making.
+
+We accept no responsibility or liability for any financial decisions made based on the information provided by this application.
 
 ![React](https://img.shields.io/badge/React-19.1.1-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)
@@ -10,9 +22,9 @@ A comprehensive, feature-rich home loan calculator built specifically for the In
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.16-cyan?logo=tailwindcss)
 ![TanStack Router](https://img.shields.io/badge/TanStack%20Router-1.134.12-orange)
 
-## ✨ Features
+## Features
 
-### 📊 Core Calculators
+### Core Calculators
 - **EMI Calculator** - Calculate monthly installments with detailed amortization schedule
   - **Fixed Rate Loans** - Traditional loans with constant interest rates
   - **Floating Rate Loans** - Variable rate loans with periodic rate adjustments
@@ -23,7 +35,7 @@ A comprehensive, feature-rich home loan calculator built specifically for the In
 - **Affordability Calculator** - Determine loan eligibility based on income and FOIR
 - **Loan Comparison** - Compare multiple loan scenarios side-by-side
 
-### 📈 Advanced Features
+### Advanced Features
 - **Amortization Schedules** - Month-by-month and year-by-year breakdowns
 - **Interactive Charts** - Principal vs Interest, Loan Balance, EMI Breakdown, Radar Comparisons
 - **CSV Export** - Download loan summaries and amortization schedules
@@ -34,21 +46,21 @@ A comprehensive, feature-rich home loan calculator built specifically for the In
 - **Stamp Duty Calculations** - State-specific rates with gender-based discounts
 - **GST Calculations** - 5% GST on under-construction properties
 
-### 🎯 Indian Market Specific
+### Indian Market Specific
 - **Indian Number Formatting** - Lakhs and Crores (₹1,50,00,000 = ₹1.5Cr)
 - **RBI Guidelines** - LTV ratios: 90% (≤₹30L), 80% (₹30-75L), 75% (>₹75L)
 - **Tax Year FY 2024-25** - Latest income tax slabs and deduction limits
 - **State-wise Stamp Duty** - Maharashtra, Karnataka, Delhi, and more
 - **Joint Loan Support** - Both co-borrowers can claim full tax deductions
 
-### ♿ Accessibility & UX
+### Accessibility & UX
 - **WCAG 2.1 Compliant** - Full keyboard navigation and screen reader support
 - **Mobile Responsive** - Optimized for all screen sizes
 - **Error Boundaries** - Graceful error handling with user-friendly messages
 - **Performance Optimized** - React.memo and useMemo for expensive calculations
 - **Auto-calculate** - Real-time updates as you adjust inputs
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+ (recommended: 20+)
@@ -81,61 +93,9 @@ pnpm build
 pnpm preview
 ```
 
-## 🏗️ Project Structure
+## Navigation & Routing
 
-```
-src/
-├── routes/                   # TanStack Router file-based routes
-│   ├── __root.tsx           # Root layout with Header, Footer, Outlet
-│   ├── index.tsx            # Landing page with hero and features
-│   ├── emi.tsx              # EMI Calculator route
-│   ├── tax-benefits.tsx     # Tax Benefits Calculator route
-│   ├── prepayment.tsx       # Prepayment Scenarios route
-│   ├── pmay.tsx             # PMAY Subsidy Calculator route
-│   ├── affordability.tsx    # Affordability Analysis route
-│   └── comparison.tsx       # Loan Comparison route
-├── components/
-│   ├── layout/              # Layout components
-│   │   ├── Header.tsx       # App header with logo and navigation
-│   │   ├── Footer.tsx       # App footer
-│   │   └── NavigationMenu.tsx # Dropdown navigation menu (3 groups)
-│   ├── calculators/         # Calculator components
-│   │   ├── EMICalculator.tsx
-│   │   ├── TaxBenefitsCalculator.tsx
-│   │   ├── PrepaymentCalculator.tsx
-│   │   ├── PMAYCalculator.tsx
-│   │   └── AffordabilityCalculator.tsx
-│   ├── charts/              # Recharts-based visualization components
-│   ├── comparison/          # Loan comparison tools, scenario analysis
-│   ├── forms/               # Input forms with React Hook Form + Zod validation
-│   │   ├── LoanDetailsForm.tsx
-│   │   ├── FloatingRateInputs.tsx
-│   │   └── HybridRateInputs.tsx
-│   ├── results/             # EMI summary and amortization tables
-│   ├── ui/                  # Reusable UI components (shadcn/ui)
-│   └── ErrorBoundary.tsx    # Error boundary component
-├── lib/
-│   ├── calculations/        # Pure calculation functions
-│   │   ├── emi.ts          # EMI, tenure, loan amount calculations
-│   │   ├── amortization.ts # Schedule generation (fixed rate)
-│   │   ├── floatingRate.ts # Floating rate schedules and scenarios
-│   │   ├── hybridRate.ts   # Hybrid rate calculations
-│   │   ├── tax.ts          # Tax benefit calculations
-│   │   ├── pmay.ts         # PMAY subsidy logic
-│   │   ├── stampDuty.ts    # State-specific stamp duty
-│   │   └── affordability.ts # Income-based affordability
-│   ├── utils/
-│   │   └── export.ts       # CSV export utilities
-│   ├── utils.ts            # Currency formatting, number utilities
-│   ├── constants.ts        # Tax slabs, PMAY criteria, stamp duty rates
-│   └── types.ts            # TypeScript type definitions
-├── routeTree.gen.ts         # Auto-generated route tree (by TanStack Router)
-└── main.tsx                 # App entry point with RouterProvider
-```
-
-## 🧭 Navigation & Routing
-
-The app uses **TanStack Router** for type-safe, file-based routing with the following structure:
+The app uses **TanStack Router** for type-safe, file-based routing.
 
 ### Routes
 
@@ -149,43 +109,7 @@ The app uses **TanStack Router** for type-safe, file-based routing with the foll
 | `/affordability` | Affordability | FOIR-based loan affordability |
 | `/comparison` | Loan Comparison | Side-by-side scenario comparison |
 
-### Navigation Menu
-
-The header contains a **dropdown navigation** organized into 3 groups:
-
-**Core Calculator**
-- 🏠 EMI Calculator - Calculate monthly EMI and payment breakdown
-
-**Financial Benefits**
-- ₹ Tax Benefits - Section 80C/24b/80EEA deductions
-- 🏛️ PMAY Subsidy - Subsidy eligibility and savings
-
-**Analysis Tools**
-- ⚡ Prepayment - Analyze prepayment impact
-- 📊 Affordability - FOIR-based affordability analysis
-- ⚖️ Compare Loans - Side-by-side loan comparison
-
-### Mobile Navigation
-
-- **Hamburger menu** on mobile devices (< 768px)
-- Slides from right with semi-transparent backdrop
-- Same 3-group structure for consistency
-- Active route highlighting
-│   │   ├── floatingRate.ts  # Floating rate schedules and scenarios
-│   │   ├── hybridRate.ts    # Hybrid rate calculations
-│   │   ├── tax.ts           # Tax benefit calculations
-│   │   ├── pmay.ts          # PMAY subsidy logic
-│   │   ├── stampDuty.ts     # State-specific stamp duty
-│   │   └── affordability.ts # Income-based affordability
-│   ├── utils/
-│   │   └── export.ts        # CSV export utilities
-│   ├── utils.ts             # Currency formatting, number utilities
-│   ├── constants.ts         # Tax slabs, PMAY criteria, stamp duty rates
-│   └── types.ts             # TypeScript type definitions
-└── App.tsx                   # Main application component
-```
-
-## 🧮 Financial Calculations
+## Financial Calculations
 
 ### EMI Formula
 
@@ -213,10 +137,6 @@ Floating rate loans maintain **constant tenure** while **EMI adjusts** when rate
 Rate at Month M = Base Rate + (Number of Changes × Rate Increase %)
 ```
 
-**Example:**
-- Base: 8.5%, Increase: 0.25% every 12 months, Tenure: 20 years
-- Year 1: 8.5% → Year 2: 8.75% → Year 3: 9.0% (EMI adjusts each time)
-
 #### Hybrid Rate Loans
 Hybrid loans combine fixed and floating periods:
 
@@ -236,12 +156,6 @@ EMI_floating = Recalculated using:
   - Remaining tenure
 ```
 
-**Example:**
-- Loan: ₹50L, Tenure: 20 years
-- Fixed: 8.5% for 5 years (60 months)
-- Floating: 9.0% with +0.25% yearly increases
-- Transition at Month 61: EMI changes from ₹43,391 → ₹45,678
-
 ### Scenario Analysis (Floating Loans)
 
 The calculator generates three scenarios to help understand risk:
@@ -251,8 +165,6 @@ The calculator generates three scenarios to help understand risk:
 | **Optimistic** | Rates decrease by configured % | Best-case outcome |
 | **Realistic** | Rates increase as configured | Expected scenario |
 | **Pessimistic** | Rates increase at 2× speed | Worst-case planning |
-
-**Use Case:** Budget for realistic, prepare for pessimistic, hope for optimistic.
 
 ### Tax Benefits (Old Regime)
 - **Section 80C**: Principal repayment up to ₹1.5 lakh/year
@@ -268,7 +180,7 @@ The calculator generates three scenarios to help understand risk:
 | MIG-1    | ₹6-12L        | 4.0%         | ₹2.35L      | ₹9L         |
 | MIG-2    | ₹12-18L       | 3.0%         | ₹2.30L      | ₹12L        |
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend Framework**: React 19.1.1 (with automatic JSX runtime)
 - **Routing**: TanStack Router 1.134.12 (file-based, type-safe routing)
@@ -280,7 +192,7 @@ The calculator generates three scenarios to help understand risk:
 - **Icons**: React Icons 5.5.0
 - **Date Handling**: date-fns 4.1.0
 
-## 📦 Key Dependencies
+## Key Dependencies
 
 ```json
 {
@@ -297,7 +209,7 @@ The calculator generates three scenarios to help understand risk:
 }
 ```
 
-## 🎨 Features in Detail
+## Features in Detail
 
 ### EMI Calculator
 - Real-time EMI calculation with input validation
@@ -307,7 +219,7 @@ The calculator generates three scenarios to help understand risk:
   - **Hybrid Rate**: Fixed period → Floating period transition
 - Visual breakdown of Principal vs Interest
 - Loan balance progression chart
-- **Rate change markers** on charts (📊 for floating changes, 🔀 for hybrid transition)
+- **Rate change markers** on charts for floating changes and hybrid transitions
 - **Rate Change Schedule** table showing month-by-month rate and EMI changes
 - **Scenario Analysis** for floating loans (optimistic/realistic/pessimistic)
 - Amortization schedule (monthly/yearly views)
@@ -340,147 +252,12 @@ The calculator generates three scenarios to help understand risk:
 - Property value recommendation
 
 ### Loan Comparison
-- Side-by-side comparison of up to 5 scenarios
+- Side-by-side comparison of up to 3 scenarios
 - Radar charts for multi-dimensional analysis
 - Grouped bar charts for metrics
 - Best/worst scenario highlighting
 
-## 📚 Usage Examples
-
-### Example 1: Fixed Rate Loan
-**Scenario:** Traditional home loan with constant interest rate
-
-```typescript
-Inputs:
-- Property Value: ₹75,00,000
-- Down Payment: ₹15,00,000 (20%)
-- Loan Amount: ₹60,00,000
-- Loan Type: Fixed
-- Interest Rate: 8.5% p.a.
-- Tenure: 20 years
-
-Results:
-- Monthly EMI: ₹52,069
-- Total Interest: ₹64,96,560
-- Total Amount: ₹1,24,96,560
-- Interest/Principal Ratio: 1.08x
-```
-
-### Example 2: Floating Rate Loan
-**Scenario:** Variable rate loan with periodic increases
-
-```typescript
-Inputs:
-- Loan Amount: ₹50,00,000
-- Loan Type: Floating
-- Initial Rate: 8.5% p.a.
-- Rate Increase: 0.25% every 12 months
-- Tenure: 20 years
-
-Results:
-- Initial EMI: ₹43,391
-- Final EMI (Year 20): ₹48,523
-- Average Rate: 9.875% p.a.
-- Total Interest: ₹68,42,315
-
-Rate Change Schedule:
-| Year | Rate  | EMI     |
-|------|-------|---------|
-| 1    | 8.50% | ₹43,391 |
-| 2    | 8.75% | ₹43,842 |
-| 3    | 9.00% | ₹44,298 |
-| ...  | ...   | ...     |
-| 20   | 13.25%| ₹48,523 |
-
-Scenario Analysis:
-- Optimistic (rates decrease): Total Interest ₹54,23,456
-- Realistic (as configured): Total Interest ₹68,42,315
-- Pessimistic (2× increases): Total Interest ₹89,67,892
-```
-
-### Example 3: Hybrid Rate Loan
-**Scenario:** Fixed period followed by floating rate
-
-```typescript
-Inputs:
-- Loan Amount: ₹75,00,000
-- Loan Type: Hybrid
-- Fixed Rate: 8.5% for 5 years (60 months)
-- Floating Rate: 9.0% p.a.
-- Rate Increase: 0.20% every 12 months (during floating period)
-- Tenure: 25 years
-
-Results:
-Fixed Period (Years 1-5):
-- EMI: ₹61,523
-- Rate: 8.5% (constant)
-
-Floating Period (Years 6-25):
-- Initial EMI (Year 6): ₹64,178
-- Final EMI (Year 25): ₹69,234
-- Avg Floating Rate: 10.9% p.a.
-
-Overall:
-- Average Rate: 10.12% p.a.
-- Total Interest: ₹1,24,56,789
-- Transition at Month 61: EMI jumps from ₹61,523 → ₹64,178
-```
-
-### Example 4: Tax Benefits (Joint Loan)
-**Scenario:** Married couple with joint home loan
-
-```typescript
-Inputs:
-- Primary Borrower Income: ₹12,00,000/year
-- Co-borrower Income: ₹10,00,000/year
-- Ownership Split: 50-50
-- Tax Regime: Old
-- Principal Paid (Year 1): ₹3,20,000
-- Interest Paid (Year 1): ₹5,10,000
-- First-time Buyer: Yes
-- Property Value: ₹45,00,000
-
-Results:
-Primary Borrower Deductions:
-- Section 80C (Principal): ₹1,50,000
-- Section 24(b) (Interest): ₹2,00,000
-- Section 80EEA (First-time): ₹1,50,000
-- Total Deductions: ₹5,00,000
-- Tax Savings @ 30%: ₹1,50,000
-
-Co-borrower Deductions:
-- Same deductions (both can claim full)
-- Tax Savings @ 30%: ₹1,50,000
-
-Combined Annual Savings: ₹3,00,000
-Over 20 years: ₹60,00,000 (huge benefit!)
-```
-
-### Example 5: PMAY Subsidy Eligibility
-**Scenario:** Middle-Income Group applying for PMAY
-
-```typescript
-Inputs:
-- Annual Income: ₹8,50,000
-- Loan Amount: ₹30,00,000
-- Property Value: ₹40,00,000
-- Interest Rate: 8.5%
-- Tenure: 20 years
-- First-time Buyer: Yes
-
-Results:
-- Eligible Category: MIG-1
-- Subsidy Rate: 4.0% (for 20 years)
-- Max Eligible Loan: ₹9,00,000
-- Subsidy NPV: ₹2,35,000
-- Effective Rate: 7.5% (on eligible portion)
-- Monthly Savings: ₹980
-- Total Savings: ₹2,35,000
-
-Note: Subsidy applies only to ₹9L portion, remaining ₹21L at 8.5%
-```
-
-## 🔐 TypeScript Configuration
+## TypeScript Configuration
 
 The project uses strict TypeScript with:
 - `verbatimModuleSyntax: true` - Explicit type imports
@@ -488,14 +265,14 @@ The project uses strict TypeScript with:
 - `erasableSyntaxOnly: true` - No TS-only syntax
 - All calculations fully typed with interfaces
 
-## 🎯 Performance Optimizations
+## Performance Optimizations
 
 - **React.memo** - All chart components memoized
 - **useMemo** - Expensive calculations cached
 - **Code Splitting** - Lazy loading for better initial load
 - **Debounced Inputs** - Reduced re-renders on form changes
 
-## ♿ Accessibility Features
+## Accessibility Features
 
 - **ARIA Labels** - All interactive elements properly labeled
 - **Keyboard Navigation** - Full keyboard support
@@ -503,7 +280,7 @@ The project uses strict TypeScript with:
 - **Focus Management** - Visible focus indicators
 - **Color Contrast** - WCAG AA compliant
 
-## 📱 Responsive Design
+## Responsive Design
 
 - **Mobile First** - Optimized for mobile devices
 - **Breakpoints**: 
@@ -512,14 +289,14 @@ The project uses strict TypeScript with:
   - Desktop: ≥ 1024px (sidebar + main)
 - **Touch-friendly** - Large tap targets, easy-to-use sliders
 
-## 🚦 Error Handling
+## Error Handling
 
 - **Error Boundaries** - Catch and display component errors gracefully
 - **Form Validation** - Zod schema validation with helpful error messages
 - **Calculation Safeguards** - Handle edge cases (division by zero, negative values)
 - **User Feedback** - Clear error messages and warnings
 
-## 📊 Export Features
+## Export Features
 
 - **CSV Export** for:
   - Monthly amortization schedules
@@ -528,7 +305,7 @@ The project uses strict TypeScript with:
 - Timestamped filenames
 - Excel/Google Sheets compatible
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -538,21 +315,23 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with guidance from Indian financial regulations and RBI guidelines
 - Tax calculations based on Income Tax Act (FY 2024-25)
 - PMAY criteria from pradhanmantriawasyojana.com
 - State-specific stamp duty rates from respective state revenue departments
 
-## 📧 Contact
+## Contact
 
 For questions or feedback, please open an issue on GitHub.
 
 ---
 
 **Made with ❤️ for Indian home buyers**
+
+**"Because your mortgage shouldn't be a mystery"**
