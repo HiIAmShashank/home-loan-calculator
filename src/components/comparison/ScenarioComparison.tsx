@@ -31,8 +31,8 @@ function ScenarioComparisonComponent({ loanInputs }: ScenarioComparisonProps) {
             loanInputs.loanAmount,
             loanInputs.interestRate,
             loanInputs.loanTenure,
-            loanInputs.rateIncreasePercent,
-            loanInputs.rateChangeFrequencyMonths
+            loanInputs.rateChangeFrequencyMonths,
+            loanInputs.rateIncreasePercent
         );
     }, [loanInputs]);
 

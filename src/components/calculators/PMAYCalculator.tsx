@@ -11,6 +11,7 @@ import type { PMAYInputs, PMAYResult } from '@/lib/types';
 import { calculatePMAYSubsidy } from '@/lib/calculations/pmay';
 import { formatIndianCurrency, formatToLakhsCrores } from '@/lib/utils';
 import { PMAY_CRITERIA } from '@/lib/constants';
+import { AmountInWords } from '@/components/ui/AmountInWords';
 
 const pmayFormSchema = z.object({
     annualIncome: z.number().min(0).max(20000000),
@@ -56,6 +57,8 @@ export function PMAYCalculator({
     });
 
     const annualIncome = watch('annualIncome');
+    const loanAmount = watch('loanAmount');
+    const propertyValue = watch('propertyValue');
     const isFirstTime = watch('isFirstTime');
 
     const onSubmit = (data: PMAYFormData) => {
@@ -106,8 +109,6 @@ export function PMAYCalculator({
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">PMAY Subsidy Calculator</h2>
-
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     {/* Annual Income */}
                     <div>
@@ -120,6 +121,7 @@ export function PMAYCalculator({
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                             placeholder="8,00,000"
                         />
+                        {annualIncome > 0 && <AmountInWords amount={annualIncome} className="mt-1" />}
                         {errors.annualIncome && (
                             <p className="mt-1 text-sm text-red-600">{errors.annualIncome.message}</p>
                         )}
@@ -139,6 +141,7 @@ export function PMAYCalculator({
                                 {...register('loanAmount', { valueAsNumber: true })}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                             />
+                            {loanAmount > 0 && <AmountInWords amount={loanAmount} className="mt-1" />}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -149,6 +152,7 @@ export function PMAYCalculator({
                                 {...register('propertyValue', { valueAsNumber: true })}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                             />
+                            {propertyValue > 0 && <AmountInWords amount={propertyValue} className="mt-1" />}
                         </div>
                     </div>
 
@@ -230,12 +234,14 @@ export function PMAYCalculator({
                                     <p className="text-3xl font-bold text-green-600">
                                         {formatIndianCurrency(result.subsidyNPV)}
                                     </p>
+                                    <AmountInWords amount={result.subsidyNPV} className="mt-2" />
                                 </div>
                                 <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
                                     <p className="text-sm text-gray-600 mb-1">Monthly Savings</p>
                                     <p className="text-3xl font-bold text-blue-600">
                                         {formatIndianCurrency(result.savingsPerMonth || 0)}
                                     </p>
+                                    <AmountInWords amount={result.savingsPerMonth || 0} className="mt-2" />
                                 </div>
                                 <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
                                     <p className="text-sm text-gray-600 mb-1">Effective Rate</p>

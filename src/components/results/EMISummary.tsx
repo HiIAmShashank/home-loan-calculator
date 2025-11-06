@@ -17,6 +17,7 @@ import {
 } from '@/lib/calculations/hybridRate';
 import { formatIndianCurrency, formatToLakhsCrores } from '@/lib/utils';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { AmountInWords } from '@/components/ui/AmountInWords';
 import { exportLoanSummaryToCSV } from '@/lib/utils/export';
 import { HiArrowDownTray } from 'react-icons/hi2';
 
@@ -210,6 +211,7 @@ function EMISummaryComponent({ loanInputs, showDetailedBreakdown = true }: EMISu
                     {loanInputs.loanType === 'floating' ? 'Initial Monthly EMI' : loanInputs.loanType === 'hybrid' ? 'Fixed Period EMI' : 'Monthly EMI'}
                 </p>
                 <p className="text-5xl font-bold mb-4" role="status" aria-live="polite" aria-atomic="true">{formatIndianCurrency(emi)}</p>
+                <AmountInWords amount={emi} className="text-sm opacity-90 mb-2" />
                 <p className="text-sm opacity-90">
                     {loanInputs.loanType === 'fixed'
                         ? `for ${loanInputs.loanTenure} years at ${loanInputs.interestRate}% p.a.`
@@ -234,6 +236,7 @@ function EMISummaryComponent({ loanInputs, showDetailedBreakdown = true }: EMISu
                     <p className="text-2xl font-bold text-gray-900">
                         {formatToLakhsCrores(loanInputs.loanAmount)}
                     </p>
+                    <AmountInWords amount={loanInputs.loanAmount} className="mt-2" />
                     <p className="text-xs text-gray-500 mt-1">Loan borrowed</p>
                 </div>
 
@@ -243,6 +246,7 @@ function EMISummaryComponent({ loanInputs, showDetailedBreakdown = true }: EMISu
                     <p className="text-2xl font-bold text-orange-600">
                         {formatToLakhsCrores(totalInterest)}
                     </p>
+                    <AmountInWords amount={totalInterest} className="mt-2" />
                     <p className="text-xs text-gray-500 mt-1">
                         {interestPercentage.toFixed(1)}% of principal
                     </p>
@@ -254,6 +258,7 @@ function EMISummaryComponent({ loanInputs, showDetailedBreakdown = true }: EMISu
                     <p className="text-2xl font-bold text-purple-600">
                         {formatToLakhsCrores(totalAmount)}
                     </p>
+                    <AmountInWords amount={totalAmount} className="mt-2" />
                     <p className="text-xs text-gray-500 mt-1">Principal + Interest</p>
                 </div>
             </div>

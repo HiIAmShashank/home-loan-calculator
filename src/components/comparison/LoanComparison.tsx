@@ -3,7 +3,7 @@
  * Side-by-side comparison of multiple loan scenarios
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,6 +12,7 @@ import { generateAmortizationSchedule } from '@/lib/calculations/amortization';
 import { generateFloatingRateSchedule, generatePeriodicRateChanges, calculateAverageRate } from '@/lib/calculations/floatingRate';
 import { generateHybridRateSchedule, calculateHybridAverageRate } from '@/lib/calculations/hybridRate';
 import { formatIndianCurrency, formatToLakhsCrores } from '@/lib/utils';
+import { AmountInWords } from '@/components/ui/AmountInWords';
 import { ComparisonChart } from '@/components/charts/ComparisonChart';
 import { RadarComparisonChart } from '@/components/charts/RadarComparisonChart';
 import { GroupedBarChart } from '@/components/charts/GroupedBarChart';
@@ -80,12 +81,29 @@ export function LoanComparison() {
         handleSubmit,
         reset,
         watch,
+        setValue,
         formState: { errors },
     } = useForm<ScenarioFormData>({
         resolver: zodResolver(scenarioSchema),
     });
 
     const watchLoanType = watch('loanType');
+    const watchLoanAmount = watch('loanAmount') || 0;
+
+    // Clear conditional fields when loan type changes
+    useEffect(() => {
+        if (watchLoanType === 'fixed') {
+            // Clear all floating/hybrid specific fields
+            setValue('rateIncreasePercent', undefined);
+            setValue('rateChangeFrequencyMonths', undefined);
+            setValue('fixedPeriodMonths', undefined);
+            setValue('floatingRate', undefined);
+        } else if (watchLoanType === 'floating') {
+            // Clear hybrid-specific fields
+            setValue('fixedPeriodMonths', undefined);
+            setValue('floatingRate', undefined);
+        }
+    }, [watchLoanType, setValue]);
 
     // Calculate results for all scenarios
     const scenariosWithResults = scenarios.map(scenario => {
@@ -193,10 +211,32 @@ export function LoanComparison() {
 
     const onSubmit = (data: ScenarioFormData) => {
         if (editingScenario === null) return;
+
+        // Clean up data based on loan type
+        const cleanData: Partial<Scenario> = {
+            name: data.name,
+            loanAmount: data.loanAmount,
+            interestRate: data.interestRate,
+            tenureYears: data.tenureYears,
+            loanType: data.loanType,
+        };
+
+        // Only include relevant fields based on loan type
+        if (data.loanType === 'floating') {
+            cleanData.rateIncreasePercent = data.rateIncreasePercent;
+            cleanData.rateChangeFrequencyMonths = data.rateChangeFrequencyMonths;
+        } else if (data.loanType === 'hybrid') {
+            cleanData.rateIncreasePercent = data.rateIncreasePercent;
+            cleanData.rateChangeFrequencyMonths = data.rateChangeFrequencyMonths;
+            cleanData.fixedPeriodMonths = data.fixedPeriodMonths;
+            cleanData.floatingRate = data.floatingRate;
+        }
+        // For 'fixed', no additional fields needed
+
         setScenarios(
             scenarios.map(s =>
                 s.id === editingScenario
-                    ? { ...s, ...data }
+                    ? { ...s, ...cleanData }
                     : s
             )
         );
@@ -206,11 +246,6 @@ export function LoanComparison() {
 
     return (
         <div className="w-full p-6 space-y-6" role="region" aria-labelledby="comparison-heading">
-            {/* Header */}
-            <div className="text-center space-y-2">
-                <h1 id="comparison-heading" className="text-3xl font-bold text-gray-900">Loan Comparison</h1>
-                <p className="text-gray-600">Compare up to 3 loan scenarios side-by-side</p>
-            </div>
 
             {/* Add Scenario Button */}
             {scenarios.length < 3 && (
@@ -313,6 +348,7 @@ export function LoanComparison() {
                                             <div className="text-2xl font-bold text-blue-600" role="status" aria-live="polite">
                                                 {formatIndianCurrency(scenario.emi!)}
                                             </div>
+                                            <AmountInWords amount={scenario.emi!} className="mt-1" />
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2">
@@ -377,6 +413,7 @@ export function LoanComparison() {
                                             aria-describedby={errors.loanAmount ? `loanAmount-error-${scenario.id}` : undefined}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                                         />
+                                        {watchLoanAmount > 0 && <AmountInWords amount={watchLoanAmount} className="mt-1" />}
                                         {errors.loanAmount && (
                                             <p id={`loanAmount-error-${scenario.id}`} role="alert" className="text-red-500 text-xs mt-1">{errors.loanAmount.message}</p>
                                         )}

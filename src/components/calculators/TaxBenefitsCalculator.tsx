@@ -10,6 +10,8 @@ import { z } from 'zod';
 import type { TaxInputs, TaxBreakdown } from '@/lib/types';
 import { calculateTaxSavings, calculateJointLoanBenefits } from '@/lib/calculations/tax';
 import { formatIndianCurrency } from '@/lib/utils';
+import { AmountInWords } from '@/components/ui/AmountInWords';
+import { AmountWithTooltip } from '@/components/ui/AmountWithTooltip';
 
 const taxFormSchema = z.object({
     annualIncome: z.number().min(0, 'Income must be positive').max(100000000, 'Maximum income exceeded'),
@@ -60,6 +62,10 @@ export function TaxBenefitsCalculator({
     });
 
     const isJoint = watch('isJoint');
+    const annualIncome = watch('annualIncome');
+    const principalPaid = watch('principalPaid');
+    const interestPaid = watch('interestPaid');
+    const propertyValue = watch('propertyValue');
 
     const onSubmit = (data: TaxFormData) => {
         const inputs: TaxInputs = {
@@ -96,7 +102,6 @@ export function TaxBenefitsCalculator({
     return (
         <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow" role="region" aria-labelledby="tax-calc-heading">
-                <h2 id="tax-calc-heading" className="text-2xl font-bold text-gray-900 mb-4">Tax Benefits Calculator</h2>
                 <p className="text-sm text-gray-600 mb-6">
                     Calculate your tax savings under Section 80C (principal), 24(b) (interest), and 80EEA (first-time buyer)
                 </p>
@@ -113,6 +118,7 @@ export function TaxBenefitsCalculator({
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                             placeholder="12,00,000"
                         />
+                        {annualIncome > 0 && <AmountInWords amount={annualIncome} className="mt-1" />}
                         {errors.annualIncome && (
                             <p className="mt-1 text-sm text-red-600">{errors.annualIncome.message}</p>
                         )}
@@ -156,6 +162,7 @@ export function TaxBenefitsCalculator({
                                 {...register('principalPaid', { valueAsNumber: true })}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                             />
+                            {principalPaid > 0 && <AmountInWords amount={principalPaid} className="mt-1" />}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -166,6 +173,7 @@ export function TaxBenefitsCalculator({
                                 {...register('interestPaid', { valueAsNumber: true })}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                             />
+                            {interestPaid > 0 && <AmountInWords amount={interestPaid} className="mt-1" />}
                         </div>
                     </div>
 
@@ -180,6 +188,7 @@ export function TaxBenefitsCalculator({
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                             placeholder="0"
                         />
+                        {watch('other80CInvestments') > 0 && <AmountInWords amount={watch('other80CInvestments')} className="mt-1" />}
                     </div>
 
                     {/* First Time Buyer */}
@@ -204,6 +213,7 @@ export function TaxBenefitsCalculator({
                             {...register('propertyValue', { valueAsNumber: true })}
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                         />
+                        {propertyValue > 0 && <AmountInWords amount={propertyValue} className="mt-1" />}
                     </div>
 
                     {/* Joint Loan */}
@@ -230,6 +240,7 @@ export function TaxBenefitsCalculator({
                                     className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="12,00,000"
                                 />
+                                {(watch('coBorrowerIncome') ?? 0) > 0 && <AmountInWords amount={watch('coBorrowerIncome') ?? 0} className="mt-1" />}
                             </div>
                         )}
                     </div>
@@ -266,18 +277,21 @@ export function TaxBenefitsCalculator({
                             <p className="text-2xl font-bold text-gray-900">
                                 {formatIndianCurrency(taxBreakdown.taxWithoutLoan)}
                             </p>
+                            <AmountInWords amount={taxBreakdown.taxWithoutLoan} className="mt-2" />
                         </div>
                         <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
                             <p className="text-sm text-gray-600 mb-1">Tax With Loan</p>
                             <p className="text-2xl font-bold text-blue-600">
                                 {formatIndianCurrency(taxBreakdown.taxWithLoan)}
                             </p>
+                            <AmountInWords amount={taxBreakdown.taxWithLoan} className="mt-2" />
                         </div>
                         <div className="bg-white p-6 rounded-lg shadow border border-green-200">
                             <p className="text-sm text-gray-600 mb-1">Annual Tax Savings</p>
                             <p className="text-2xl font-bold text-green-600">
                                 {formatIndianCurrency(taxBreakdown.savings)}
                             </p>
+                            <AmountInWords amount={taxBreakdown.savings} className="mt-2" />
                         </div>
                     </div>
 
@@ -287,16 +301,16 @@ export function TaxBenefitsCalculator({
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-gray-600">Section 80C (Principal)</span>
-                                <span className="font-medium">{formatIndianCurrency(taxBreakdown.deductions.section80C)}</span>
+                                <span className="font-medium"><AmountWithTooltip amount={taxBreakdown.deductions.section80C} /></span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-gray-600">Section 24(b) (Interest)</span>
-                                <span className="font-medium">{formatIndianCurrency(taxBreakdown.deductions.section24b)}</span>
+                                <span className="font-medium"><AmountWithTooltip amount={taxBreakdown.deductions.section24b} /></span>
                             </div>
                             {taxBreakdown.deductions.section80EEA > 0 && (
                                 <div className="flex justify-between items-center">
                                     <span className="text-sm text-gray-600">Section 80EEA (First-time)</span>
-                                    <span className="font-medium text-green-600">{formatIndianCurrency(taxBreakdown.deductions.section80EEA)}</span>
+                                    <span className="font-medium text-green-600"><AmountWithTooltip amount={taxBreakdown.deductions.section80EEA} /></span>
                                 </div>
                             )}
                             <div className="border-t pt-3 flex justify-between items-center font-bold">
@@ -310,6 +324,7 @@ export function TaxBenefitsCalculator({
                     <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow">
                         <h3 className="text-lg font-bold mb-2">20-Year Cumulative Savings</h3>
                         <p className="text-4xl font-bold">{formatIndianCurrency(taxBreakdown.savings * 20)}</p>
+                        <AmountInWords amount={taxBreakdown.savings * 20} className="text-sm opacity-90 mt-2" variant="light" />
                         <p className="text-sm opacity-90 mt-2">
                             Assuming similar deductions over 20-year loan tenure
                         </p>
