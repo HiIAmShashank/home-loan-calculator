@@ -1,4 +1,6 @@
-# 🏠 Indian Home Loan Calculator
+# 🏠 Loanly - Home Loan Calculator
+
+**"Because your mortgage shouldn't be a mystery"**
 
 A comprehensive, feature-rich home loan calculator built specifically for the Indian market. Calculate EMI, tax benefits, PMAY subsidy, prepayment scenarios, and total cost of ownership with support for Indian tax regulations and state-specific charges.
 
@@ -6,6 +8,7 @@ A comprehensive, feature-rich home loan calculator built specifically for the In
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)
 ![Vite](https://img.shields.io/badge/Vite-7.1.7-purple?logo=vite)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.16-cyan?logo=tailwindcss)
+![TanStack Router](https://img.shields.io/badge/TanStack%20Router-1.134.12-orange)
 
 ## ✨ Features
 
@@ -82,22 +85,92 @@ pnpm preview
 
 ```
 src/
+├── routes/                   # TanStack Router file-based routes
+│   ├── __root.tsx           # Root layout with Header, Footer, Outlet
+│   ├── index.tsx            # Landing page with hero and features
+│   ├── emi.tsx              # EMI Calculator route
+│   ├── tax-benefits.tsx     # Tax Benefits Calculator route
+│   ├── prepayment.tsx       # Prepayment Scenarios route
+│   ├── pmay.tsx             # PMAY Subsidy Calculator route
+│   ├── affordability.tsx    # Affordability Analysis route
+│   └── comparison.tsx       # Loan Comparison route
 ├── components/
-│   ├── calculators/          # Tax, PMAY, Prepayment, Affordability calculators
-│   ├── charts/               # Recharts-based visualization components
-│   ├── comparison/           # Loan comparison tools, scenario analysis
-│   ├── forms/                # Input forms with React Hook Form + Zod validation
-│   │   ├── LoanDetailsForm.tsx           # Main loan input form
-│   │   ├── FloatingRateInputs.tsx        # Floating rate configuration
-│   │   └── HybridRateInputs.tsx          # Hybrid rate configuration
-│   ├── results/              # EMI summary and amortization tables
-│   ├── ui/                   # Reusable UI components (SliderWithInput, etc.)
-│   ├── layout/               # Layout components
-│   └── ErrorBoundary.tsx     # Error boundary component
+│   ├── layout/              # Layout components
+│   │   ├── Header.tsx       # App header with logo and navigation
+│   │   ├── Footer.tsx       # App footer
+│   │   └── NavigationMenu.tsx # Dropdown navigation menu (3 groups)
+│   ├── calculators/         # Calculator components
+│   │   ├── EMICalculator.tsx
+│   │   ├── TaxBenefitsCalculator.tsx
+│   │   ├── PrepaymentCalculator.tsx
+│   │   ├── PMAYCalculator.tsx
+│   │   └── AffordabilityCalculator.tsx
+│   ├── charts/              # Recharts-based visualization components
+│   ├── comparison/          # Loan comparison tools, scenario analysis
+│   ├── forms/               # Input forms with React Hook Form + Zod validation
+│   │   ├── LoanDetailsForm.tsx
+│   │   ├── FloatingRateInputs.tsx
+│   │   └── HybridRateInputs.tsx
+│   ├── results/             # EMI summary and amortization tables
+│   ├── ui/                  # Reusable UI components (shadcn/ui)
+│   └── ErrorBoundary.tsx    # Error boundary component
 ├── lib/
-│   ├── calculations/         # Pure calculation functions
-│   │   ├── emi.ts           # EMI, tenure, loan amount calculations
-│   │   ├── amortization.ts  # Schedule generation (fixed rate)
+│   ├── calculations/        # Pure calculation functions
+│   │   ├── emi.ts          # EMI, tenure, loan amount calculations
+│   │   ├── amortization.ts # Schedule generation (fixed rate)
+│   │   ├── floatingRate.ts # Floating rate schedules and scenarios
+│   │   ├── hybridRate.ts   # Hybrid rate calculations
+│   │   ├── tax.ts          # Tax benefit calculations
+│   │   ├── pmay.ts         # PMAY subsidy logic
+│   │   ├── stampDuty.ts    # State-specific stamp duty
+│   │   └── affordability.ts # Income-based affordability
+│   ├── utils/
+│   │   └── export.ts       # CSV export utilities
+│   ├── utils.ts            # Currency formatting, number utilities
+│   ├── constants.ts        # Tax slabs, PMAY criteria, stamp duty rates
+│   └── types.ts            # TypeScript type definitions
+├── routeTree.gen.ts         # Auto-generated route tree (by TanStack Router)
+└── main.tsx                 # App entry point with RouterProvider
+```
+
+## 🧭 Navigation & Routing
+
+The app uses **TanStack Router** for type-safe, file-based routing with the following structure:
+
+### Routes
+
+| Route | Component | Description |
+|-------|-----------|-------------|
+| `/` | Landing Page | Hero section with tagline and feature overview |
+| `/emi` | EMI Calculator | Core calculator with fixed/floating/hybrid rates |
+| `/tax-benefits` | Tax Benefits | Section 80C/24b/80EEA calculations |
+| `/prepayment` | Prepayment | Lump-sum and recurring prepayment scenarios |
+| `/pmay` | PMAY Subsidy | Eligibility and subsidy calculations |
+| `/affordability` | Affordability | FOIR-based loan affordability |
+| `/comparison` | Loan Comparison | Side-by-side scenario comparison |
+
+### Navigation Menu
+
+The header contains a **dropdown navigation** organized into 3 groups:
+
+**Core Calculator**
+- 🏠 EMI Calculator - Calculate monthly EMI and payment breakdown
+
+**Financial Benefits**
+- ₹ Tax Benefits - Section 80C/24b/80EEA deductions
+- 🏛️ PMAY Subsidy - Subsidy eligibility and savings
+
+**Analysis Tools**
+- ⚡ Prepayment - Analyze prepayment impact
+- 📊 Affordability - FOIR-based affordability analysis
+- ⚖️ Compare Loans - Side-by-side loan comparison
+
+### Mobile Navigation
+
+- **Hamburger menu** on mobile devices (< 768px)
+- Slides from right with semi-transparent backdrop
+- Same 3-group structure for consistency
+- Active route highlighting
 │   │   ├── floatingRate.ts  # Floating rate schedules and scenarios
 │   │   ├── hybridRate.ts    # Hybrid rate calculations
 │   │   ├── tax.ts           # Tax benefit calculations
@@ -198,6 +271,7 @@ The calculator generates three scenarios to help understand risk:
 ## 🛠️ Tech Stack
 
 - **Frontend Framework**: React 19.1.1 (with automatic JSX runtime)
+- **Routing**: TanStack Router 1.134.12 (file-based, type-safe routing)
 - **Build Tool**: Vite 7.1.7
 - **Language**: TypeScript 5.9 (strict mode)
 - **Styling**: Tailwind CSS 4.1.16
