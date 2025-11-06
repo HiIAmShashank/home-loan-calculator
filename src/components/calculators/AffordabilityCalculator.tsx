@@ -79,7 +79,7 @@ export function AffordabilityCalculator() {
     const foirBadge = getFOIRBadge(formValues.foirPercentage || 50);
 
     return (
-        <div className="w-full max-w-6xl mx-auto p-6 space-y-6" role="region" aria-labelledby="afford-calc-heading">
+        <div className="w-full p-6 space-y-6" role="region" aria-labelledby="afford-calc-heading">
             {/* Header */}
             <div className="text-center space-y-2">
                 <h1 id="afford-calc-heading" className="text-3xl font-bold text-gray-900">Affordability Calculator</h1>
@@ -200,7 +200,7 @@ export function AffordabilityCalculator() {
                         </label>
                         <input
                             type="number"
-                            step="0.1"
+                            step="0.05"
                             {...register('interestRate', { valueAsNumber: true })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         />
@@ -238,7 +238,7 @@ export function AffordabilityCalculator() {
                         type="range"
                         min="40"
                         max="60"
-                        step="1"
+                        step="0.05"
                         {...register('foirPercentage', { valueAsNumber: true })}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     />

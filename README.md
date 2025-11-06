@@ -11,6 +11,9 @@ A comprehensive, feature-rich home loan calculator built specifically for the In
 
 ### 📊 Core Calculators
 - **EMI Calculator** - Calculate monthly installments with detailed amortization schedule
+  - **Fixed Rate Loans** - Traditional loans with constant interest rates
+  - **Floating Rate Loans** - Variable rate loans with periodic rate adjustments
+  - **Hybrid Rate Loans** - Fixed period followed by floating rate
 - **Tax Benefits Calculator** - Section 80C, 24(b), and 80EEA deductions for Old & New tax regimes
 - **PMAY Subsidy Calculator** - Pradhan Mantri Awas Yojana subsidy eligibility (EWS/LIG/MIG1/MIG2)
 - **Prepayment Calculator** - Analyze impact of lump-sum and recurring prepayments
@@ -21,7 +24,10 @@ A comprehensive, feature-rich home loan calculator built specifically for the In
 - **Amortization Schedules** - Month-by-month and year-by-year breakdowns
 - **Interactive Charts** - Principal vs Interest, Loan Balance, EMI Breakdown, Radar Comparisons
 - **CSV Export** - Download loan summaries and amortization schedules
-- **Floating Rate Projections** - Visualize potential rate changes over loan tenure
+- **Floating Rate Projections** - Visualize potential rate changes over loan tenure with visual markers
+- **Scenario Analysis** - Compare optimistic, realistic, and pessimistic rate scenarios
+- **Rate Change Schedule** - Detailed table showing when rates change and new EMI amounts
+- **Hybrid Loan Transitions** - Track fixed-to-floating period transitions
 - **Stamp Duty Calculations** - State-specific rates with gender-based discounts
 - **GST Calculations** - 5% GST on under-construction properties
 
@@ -79,16 +85,21 @@ src/
 ├── components/
 │   ├── calculators/          # Tax, PMAY, Prepayment, Affordability calculators
 │   ├── charts/               # Recharts-based visualization components
-│   ├── comparison/           # Loan comparison tools
+│   ├── comparison/           # Loan comparison tools, scenario analysis
 │   ├── forms/                # Input forms with React Hook Form + Zod validation
+│   │   ├── LoanDetailsForm.tsx           # Main loan input form
+│   │   ├── FloatingRateInputs.tsx        # Floating rate configuration
+│   │   └── HybridRateInputs.tsx          # Hybrid rate configuration
 │   ├── results/              # EMI summary and amortization tables
-│   ├── ui/                   # Reusable UI components (ErrorMessage, LoadingSpinner)
+│   ├── ui/                   # Reusable UI components (SliderWithInput, etc.)
 │   ├── layout/               # Layout components
 │   └── ErrorBoundary.tsx     # Error boundary component
 ├── lib/
 │   ├── calculations/         # Pure calculation functions
 │   │   ├── emi.ts           # EMI, tenure, loan amount calculations
-│   │   ├── amortization.ts  # Schedule generation
+│   │   ├── amortization.ts  # Schedule generation (fixed rate)
+│   │   ├── floatingRate.ts  # Floating rate schedules and scenarios
+│   │   ├── hybridRate.ts    # Hybrid rate calculations
 │   │   ├── tax.ts           # Tax benefit calculations
 │   │   ├── pmay.ts          # PMAY subsidy logic
 │   │   ├── stampDuty.ts     # State-specific stamp duty
@@ -104,6 +115,8 @@ src/
 ## 🧮 Financial Calculations
 
 ### EMI Formula
+
+#### Fixed Rate Loans
 ```
 EMI = [P × R × (1+R)^N] / [(1+R)^N - 1]
 
@@ -112,6 +125,61 @@ P = Principal loan amount
 R = Monthly interest rate (annual rate / 12 / 100)
 N = Total number of monthly payments (tenure in years × 12)
 ```
+
+#### Floating Rate Loans
+Floating rate loans maintain **constant tenure** while **EMI adjusts** when rates change.
+
+**Key Principles:**
+- Tenure remains fixed throughout loan life
+- EMI recalculated at each rate change using remaining balance
+- Formula: `New EMI = [Outstanding Balance × New R × (1+New R)^Remaining N] / [(1+New R)^Remaining N - 1]`
+
+**Rate Change Generation:**
+```typescript
+// Periodic rate changes (e.g., +0.25% every 12 months)
+Rate at Month M = Base Rate + (Number of Changes × Rate Increase %)
+```
+
+**Example:**
+- Base: 8.5%, Increase: 0.25% every 12 months, Tenure: 20 years
+- Year 1: 8.5% → Year 2: 8.75% → Year 3: 9.0% (EMI adjusts each time)
+
+#### Hybrid Rate Loans
+Hybrid loans combine fixed and floating periods:
+
+**Structure:**
+1. **Fixed Period**: First N months at fixed rate (constant EMI)
+2. **Floating Period**: Remaining tenure at floating rate (EMI adjusts)
+
+**Calculation:**
+```typescript
+// Fixed period (Months 1 to fixedPeriodMonths)
+EMI_fixed = Standard EMI formula with fixed rate
+
+// Floating period (Months fixedPeriodMonths+1 to end)
+EMI_floating = Recalculated using:
+  - Outstanding balance at transition
+  - Floating rate (may include periodic increases)
+  - Remaining tenure
+```
+
+**Example:**
+- Loan: ₹50L, Tenure: 20 years
+- Fixed: 8.5% for 5 years (60 months)
+- Floating: 9.0% with +0.25% yearly increases
+- Transition at Month 61: EMI changes from ₹43,391 → ₹45,678
+
+### Scenario Analysis (Floating Loans)
+
+The calculator generates three scenarios to help understand risk:
+
+| Scenario | Rate Change | Purpose |
+|----------|-------------|---------|
+| **Optimistic** | Rates decrease by configured % | Best-case outcome |
+| **Realistic** | Rates increase as configured | Expected scenario |
+| **Pessimistic** | Rates increase at 2× speed | Worst-case planning |
+
+**Use Case:** Budget for realistic, prepare for pessimistic, hope for optimistic.
 
 ### Tax Benefits (Old Regime)
 - **Section 80C**: Principal repayment up to ₹1.5 lakh/year
@@ -159,8 +227,15 @@ N = Total number of monthly payments (tenure in years × 12)
 
 ### EMI Calculator
 - Real-time EMI calculation with input validation
+- **Three loan types supported:**
+  - **Fixed Rate**: Traditional constant-rate loans
+  - **Floating Rate**: Variable rates with tenure constant, EMI adjusts
+  - **Hybrid Rate**: Fixed period → Floating period transition
 - Visual breakdown of Principal vs Interest
 - Loan balance progression chart
+- **Rate change markers** on charts (📊 for floating changes, 🔀 for hybrid transition)
+- **Rate Change Schedule** table showing month-by-month rate and EMI changes
+- **Scenario Analysis** for floating loans (optimistic/realistic/pessimistic)
 - Amortization schedule (monthly/yearly views)
 - Export to CSV functionality
 
@@ -195,6 +270,141 @@ N = Total number of monthly payments (tenure in years × 12)
 - Radar charts for multi-dimensional analysis
 - Grouped bar charts for metrics
 - Best/worst scenario highlighting
+
+## 📚 Usage Examples
+
+### Example 1: Fixed Rate Loan
+**Scenario:** Traditional home loan with constant interest rate
+
+```typescript
+Inputs:
+- Property Value: ₹75,00,000
+- Down Payment: ₹15,00,000 (20%)
+- Loan Amount: ₹60,00,000
+- Loan Type: Fixed
+- Interest Rate: 8.5% p.a.
+- Tenure: 20 years
+
+Results:
+- Monthly EMI: ₹52,069
+- Total Interest: ₹64,96,560
+- Total Amount: ₹1,24,96,560
+- Interest/Principal Ratio: 1.08x
+```
+
+### Example 2: Floating Rate Loan
+**Scenario:** Variable rate loan with periodic increases
+
+```typescript
+Inputs:
+- Loan Amount: ₹50,00,000
+- Loan Type: Floating
+- Initial Rate: 8.5% p.a.
+- Rate Increase: 0.25% every 12 months
+- Tenure: 20 years
+
+Results:
+- Initial EMI: ₹43,391
+- Final EMI (Year 20): ₹48,523
+- Average Rate: 9.875% p.a.
+- Total Interest: ₹68,42,315
+
+Rate Change Schedule:
+| Year | Rate  | EMI     |
+|------|-------|---------|
+| 1    | 8.50% | ₹43,391 |
+| 2    | 8.75% | ₹43,842 |
+| 3    | 9.00% | ₹44,298 |
+| ...  | ...   | ...     |
+| 20   | 13.25%| ₹48,523 |
+
+Scenario Analysis:
+- Optimistic (rates decrease): Total Interest ₹54,23,456
+- Realistic (as configured): Total Interest ₹68,42,315
+- Pessimistic (2× increases): Total Interest ₹89,67,892
+```
+
+### Example 3: Hybrid Rate Loan
+**Scenario:** Fixed period followed by floating rate
+
+```typescript
+Inputs:
+- Loan Amount: ₹75,00,000
+- Loan Type: Hybrid
+- Fixed Rate: 8.5% for 5 years (60 months)
+- Floating Rate: 9.0% p.a.
+- Rate Increase: 0.20% every 12 months (during floating period)
+- Tenure: 25 years
+
+Results:
+Fixed Period (Years 1-5):
+- EMI: ₹61,523
+- Rate: 8.5% (constant)
+
+Floating Period (Years 6-25):
+- Initial EMI (Year 6): ₹64,178
+- Final EMI (Year 25): ₹69,234
+- Avg Floating Rate: 10.9% p.a.
+
+Overall:
+- Average Rate: 10.12% p.a.
+- Total Interest: ₹1,24,56,789
+- Transition at Month 61: EMI jumps from ₹61,523 → ₹64,178
+```
+
+### Example 4: Tax Benefits (Joint Loan)
+**Scenario:** Married couple with joint home loan
+
+```typescript
+Inputs:
+- Primary Borrower Income: ₹12,00,000/year
+- Co-borrower Income: ₹10,00,000/year
+- Ownership Split: 50-50
+- Tax Regime: Old
+- Principal Paid (Year 1): ₹3,20,000
+- Interest Paid (Year 1): ₹5,10,000
+- First-time Buyer: Yes
+- Property Value: ₹45,00,000
+
+Results:
+Primary Borrower Deductions:
+- Section 80C (Principal): ₹1,50,000
+- Section 24(b) (Interest): ₹2,00,000
+- Section 80EEA (First-time): ₹1,50,000
+- Total Deductions: ₹5,00,000
+- Tax Savings @ 30%: ₹1,50,000
+
+Co-borrower Deductions:
+- Same deductions (both can claim full)
+- Tax Savings @ 30%: ₹1,50,000
+
+Combined Annual Savings: ₹3,00,000
+Over 20 years: ₹60,00,000 (huge benefit!)
+```
+
+### Example 5: PMAY Subsidy Eligibility
+**Scenario:** Middle-Income Group applying for PMAY
+
+```typescript
+Inputs:
+- Annual Income: ₹8,50,000
+- Loan Amount: ₹30,00,000
+- Property Value: ₹40,00,000
+- Interest Rate: 8.5%
+- Tenure: 20 years
+- First-time Buyer: Yes
+
+Results:
+- Eligible Category: MIG-1
+- Subsidy Rate: 4.0% (for 20 years)
+- Max Eligible Loan: ₹9,00,000
+- Subsidy NPV: ₹2,35,000
+- Effective Rate: 7.5% (on eligible portion)
+- Monthly Savings: ₹980
+- Total Savings: ₹2,35,000
+
+Note: Subsidy applies only to ₹9L portion, remaining ₹21L at 8.5%
+```
 
 ## 🔐 TypeScript Configuration
 

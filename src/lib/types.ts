@@ -26,6 +26,14 @@ export interface LoanInputs {
     loanType: LoanType;
     processingFee?: number;
     prepaymentOption?: PrepaymentOption;
+
+    // Floating rate specific fields
+    rateIncreasePercent?: number; // Rate increase per change (%)
+    rateChangeFrequencyMonths?: number; // Months between rate changes
+
+    // Hybrid rate specific fields
+    fixedPeriodMonths?: number; // Months in fixed period
+    floatingRate?: number; // Rate after fixed period (%)
 }
 
 export interface PrepaymentOption {
@@ -354,19 +362,14 @@ export interface RateChange {
 }
 
 export interface FloatingRateScenario {
-    baseRate: number;
-    rateChangeFrequency: 'monthly' | 'quarterly' | 'yearly';
-    scenarios: {
-        optimistic: RateChange[];
-        realistic: RateChange[];
-        pessimistic: RateChange[];
-    };
+    optimistic: FloatingRateResult;
+    realistic: FloatingRateResult;
+    pessimistic: FloatingRateResult;
 }
 
 export interface FloatingRateResult {
-    schedule: AmortizationRow[];
+    schedule: AmortizationSchedule;
     totalInterest: number;
-    totalAmount: number;
     averageRate: number;
 }
 

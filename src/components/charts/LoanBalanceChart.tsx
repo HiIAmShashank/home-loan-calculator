@@ -5,17 +5,57 @@
 
 import { memo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import type { LoanInputs } from '@/lib/types';
 import { generateAmortizationSchedule } from '@/lib/calculations/amortization';
+import { generateFloatingRateSchedule, generatePeriodicRateChanges } from '@/lib/calculations/floatingRate';
+import { generateHybridRateSchedule } from '@/lib/calculations/hybridRate';
 import { formatIndianCurrency } from '@/lib/utils';
 
 interface LoanBalanceChartProps {
     loanAmount: number;
     interestRate: number;
     tenureYears: number;
+    loanInputs?: LoanInputs;
 }
 
-function LoanBalanceChartComponent({ loanAmount, interestRate, tenureYears }: LoanBalanceChartProps) {
-    const schedule = generateAmortizationSchedule(loanAmount, interestRate, tenureYears);
+function LoanBalanceChartComponent({ loanAmount, interestRate, tenureYears, loanInputs }: LoanBalanceChartProps) {
+    // Route to appropriate calculation based on loan type
+    let schedule;
+    if (loanInputs?.loanType === 'floating' && loanInputs.rateIncreasePercent && loanInputs.rateChangeFrequencyMonths) {
+        const totalMonths = tenureYears * 12;
+        const rateChanges = generatePeriodicRateChanges(
+            interestRate,
+            loanInputs.rateIncreasePercent,
+            loanInputs.rateChangeFrequencyMonths,
+            totalMonths
+        );
+        schedule = generateFloatingRateSchedule(
+            loanAmount,
+            interestRate,
+            tenureYears,
+            rateChanges
+        );
+    } else if (loanInputs?.loanType === 'hybrid' && loanInputs.fixedPeriodMonths && loanInputs.floatingRate) {
+        const totalMonths = tenureYears * 12;
+        const floatingRateChanges = loanInputs.rateIncreasePercent && loanInputs.rateChangeFrequencyMonths
+            ? generatePeriodicRateChanges(
+                loanInputs.floatingRate,
+                loanInputs.rateIncreasePercent,
+                loanInputs.rateChangeFrequencyMonths,
+                totalMonths
+            ).filter(change => change.fromMonth > loanInputs.fixedPeriodMonths!)
+            : [];
+        schedule = generateHybridRateSchedule(
+            loanAmount,
+            interestRate,
+            loanInputs.floatingRate,
+            loanInputs.fixedPeriodMonths,
+            tenureYears,
+            floatingRateChanges
+        );
+    } else {
+        schedule = generateAmortizationSchedule(loanAmount, interestRate, tenureYears);
+    }
 
     // Sample every 12 months for readability
     const yearlyData = schedule.schedule
