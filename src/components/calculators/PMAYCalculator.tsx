@@ -159,7 +159,7 @@ export function PMAYCalculator({
                             </label>
                             <input
                                 type="number"
-                                step="0.1"
+                                step="0.05"
                                 {...register('interestRate', { valueAsNumber: true })}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                             />

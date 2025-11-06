@@ -54,7 +54,7 @@ export function calculateEMI(
     const multiplier = Math.pow(1 + monthlyRate, numPayments);
     const emi = (principal * monthlyRate * multiplier) / (multiplier - 1);
 
-    return Math.round(emi);
+    return Math.round(emi * 100) / 100;
 }
 
 /**
@@ -79,7 +79,7 @@ export function calculateTotalInterest(
     const numPayments = tenureYears * 12;
     const totalAmount = emi * numPayments;
 
-    return Math.round(totalAmount - principal);
+    return Math.round((totalAmount - principal) * 100) / 100;
 }
 
 /**
@@ -98,7 +98,7 @@ export function calculateTotalAmount(
     const emi = calculateEMI(principal, annualRate, tenureYears);
     const numPayments = tenureYears * 12;
 
-    return Math.round(emi * numPayments);
+    return Math.round(emi * numPayments * 100) / 100;
 }
 
 /**
@@ -142,7 +142,7 @@ export function calculateLoanAmount(
     const multiplier = Math.pow(1 + monthlyRate, numPayments);
     const principal = (emi * (multiplier - 1)) / (monthlyRate * multiplier);
 
-    return Math.round(principal);
+    return Math.round(principal * 100) / 100;
 }
 
 /**
@@ -168,7 +168,7 @@ export function calculateTenure(
     if (!isFinite(principal) || !isFinite(emi) || !isFinite(annualRate)) {
         throw new Error('Invalid input: All parameters must be finite numbers');
     }
-    
+
     if (principal <= 0 || emi <= 0) return 0;
     if (annualRate < 0) {
         throw new Error('Invalid input: Interest rate cannot be negative');
@@ -339,5 +339,5 @@ export function calculateOutstanding(
 
     const outstanding = principal * (multiplierTotal - multiplierElapsed) / (multiplierTotal - 1);
 
-    return Math.round(outstanding);
+    return Math.round(outstanding * 100) / 100;
 }

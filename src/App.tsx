@@ -8,6 +8,7 @@ import { PrepaymentCalculator } from '@/components/calculators/PrepaymentCalcula
 import { PMAYCalculator } from '@/components/calculators/PMAYCalculator';
 import { AffordabilityCalculator } from '@/components/calculators/AffordabilityCalculator';
 import { LoanComparison } from '@/components/comparison/LoanComparison';
+import { ScenarioComparison } from '@/components/comparison/ScenarioComparison';
 import { AmortizationChart } from '@/components/charts/AmortizationChart';
 import { EMIBreakdownChart } from '@/components/charts/EMIBreakdownChart';
 import { LoanBalanceChart } from '@/components/charts/LoanBalanceChart';
@@ -56,7 +57,7 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main id="main-content" className="px-4 sm:px-6 lg:px-8 py-8" role="main">
+      <main id="main-content" className={`py-8 ${activeTab === 'affordability' || activeTab === 'comparison' ? '' : 'px-4 sm:px-6 lg:px-8'}`} role="main">
         {/* Tab Navigation */}
         <div className="bg-white rounded-lg shadow mb-6 lg:mb-8">
           <div className="border-b border-gray-200">
@@ -116,6 +117,7 @@ function App() {
                         loanAmount={loanInputs.loanAmount}
                         interestRate={loanInputs.interestRate}
                         tenureYears={loanInputs.loanTenure}
+                        loanInputs={loanInputs}
                       />
                     </ErrorBoundary>
                     <ErrorBoundary>
@@ -123,6 +125,7 @@ function App() {
                         loanAmount={loanInputs.loanAmount}
                         interestRate={loanInputs.interestRate}
                         tenureYears={loanInputs.loanTenure}
+                        loanInputs={loanInputs}
                       />
                     </ErrorBoundary>
                   </div>
@@ -133,8 +136,20 @@ function App() {
                       loanAmount={loanInputs.loanAmount}
                       interestRate={loanInputs.interestRate}
                       tenureYears={loanInputs.loanTenure}
+                      loanInputs={loanInputs}
                     />
                   </ErrorBoundary>
+
+                  {/* Scenario Comparison - For floating and hybrid rate loans */}
+                  {(loanInputs.loanType === 'floating' || loanInputs.loanType === 'hybrid') &&
+                    loanInputs.rateIncreasePercent &&
+                    loanInputs.rateChangeFrequencyMonths && (
+                      <ErrorBoundary>
+                        <div className="bg-white rounded-lg shadow p-6">
+                          <ScenarioComparison loanInputs={loanInputs} />
+                        </div>
+                      </ErrorBoundary>
+                    )}
 
                   {/* Amortization Table */}
                   <ErrorBoundary>
@@ -143,6 +158,7 @@ function App() {
                         loanAmount={loanInputs.loanAmount}
                         interestRate={loanInputs.interestRate}
                         tenureYears={loanInputs.loanTenure}
+                        loanInputs={loanInputs}
                       />
                     </div>
                   </ErrorBoundary>

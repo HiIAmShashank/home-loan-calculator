@@ -4,7 +4,10 @@
  */
 
 import { useState, useMemo, memo } from 'react';
+import type { LoanInputs } from '@/lib/types';
 import { generateAmortizationSchedule, generateYearlySummary } from '@/lib/calculations/amortization';
+import { generateFloatingRateSchedule, generatePeriodicRateChanges } from '@/lib/calculations/floatingRate';
+import { generateHybridRateSchedule } from '@/lib/calculations/hybridRate';
 import { formatIndianCurrency } from '@/lib/utils';
 import { exportMonthlyScheduleToCSV, exportYearlySummaryToCSV } from '@/lib/utils/export';
 import { HiArrowDownTray } from 'react-icons/hi2';
@@ -14,6 +17,7 @@ interface AmortizationTableProps {
     interestRate: number;
     tenureYears: number;
     defaultView?: 'monthly' | 'yearly';
+    loanInputs?: LoanInputs;
 }
 
 function AmortizationTableComponent({
@@ -21,6 +25,7 @@ function AmortizationTableComponent({
     interestRate,
     tenureYears,
     defaultView = 'yearly',
+    loanInputs,
 }: AmortizationTableProps) {
     const [view, setView] = useState<'monthly' | 'yearly'>(defaultView);
     const [currentPage, setCurrentPage] = useState(1);
@@ -28,12 +33,49 @@ function AmortizationTableComponent({
 
     const monthlySchedule = useMemo(() => {
         try {
-            return generateAmortizationSchedule(loanAmount, interestRate, tenureYears);
+            // Route to appropriate calculation based on loan type
+            if (loanInputs?.loanType === 'floating' && loanInputs.rateIncreasePercent && loanInputs.rateChangeFrequencyMonths) {
+                const totalMonths = tenureYears * 12;
+                const rateChanges = generatePeriodicRateChanges(
+                    interestRate,
+                    loanInputs.rateIncreasePercent,
+                    loanInputs.rateChangeFrequencyMonths,
+                    totalMonths
+                );
+                return generateFloatingRateSchedule(
+                    loanAmount,
+                    interestRate,
+                    tenureYears,
+                    rateChanges
+                );
+            } else if (loanInputs?.loanType === 'hybrid' && loanInputs.fixedPeriodMonths && loanInputs.floatingRate) {
+                // For hybrid, generate rate changes for floating period if specified
+                const totalMonths = tenureYears * 12;
+                const floatingRateChanges = loanInputs.rateIncreasePercent && loanInputs.rateChangeFrequencyMonths
+                    ? generatePeriodicRateChanges(
+                        loanInputs.floatingRate,
+                        loanInputs.rateIncreasePercent,
+                        loanInputs.rateChangeFrequencyMonths,
+                        totalMonths
+                    ).filter(change => change.fromMonth > loanInputs.fixedPeriodMonths!)
+                    : [];
+                return generateHybridRateSchedule(
+                    loanAmount,
+                    interestRate,
+                    loanInputs.floatingRate,
+                    loanInputs.fixedPeriodMonths,
+                    tenureYears,
+                    floatingRateChanges
+                );
+            } else {
+                // Fixed rate or default
+                return generateAmortizationSchedule(loanAmount, interestRate, tenureYears);
+            }
         } catch (error) {
             console.error('Amortization schedule generation error:', error);
             return { schedule: [], totalInterest: 0, totalPrincipal: 0, totalAmount: 0 };
         }
-    }, [loanAmount, interestRate, tenureYears]);
+    }, [loanAmount, interestRate, tenureYears, loanInputs]);
 
     const yearlySchedule = useMemo(() => {
         try {

@@ -11,6 +11,8 @@ import type { LoanInputs } from '@/lib/types';
 import { calculateEMI } from '@/lib/calculations/emi';
 import { formatIndianCurrency } from '@/lib/utils';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { FloatingRateInputs } from './FloatingRateInputs';
+import { HybridRateInputs } from './HybridRateInputs';
 
 // Validation schema
 const loanFormSchema = z.object({
@@ -19,6 +21,12 @@ const loanFormSchema = z.object({
     loanTenure: z.number().min(1, 'Minimum tenure is 1 year').max(30, 'Maximum tenure is 30 years'),
     interestRate: z.number().min(5, 'Interest rate must be at least 5%').max(20, 'Interest rate cannot exceed 20%'),
     loanType: z.enum(['floating', 'fixed', 'hybrid']),
+    // Floating rate fields
+    rateIncreasePercent: z.number().min(0).max(1).optional(),
+    rateChangeFrequencyMonths: z.number().min(3).max(60).optional(),
+    // Hybrid rate fields
+    fixedPeriodMonths: z.number().min(12).optional(),
+    floatingRate: z.number().min(5).max(20).optional(),
 });
 
 type LoanFormData = z.infer<typeof loanFormSchema>;
@@ -43,6 +51,12 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
             loanTenure: initialValues?.loanTenure || 20,
             interestRate: initialValues?.interestRate || 9,
             loanType: initialValues?.loanType || 'floating',
+            // Floating defaults
+            rateIncreasePercent: 0.25,
+            rateChangeFrequencyMonths: 12,
+            // Hybrid defaults
+            fixedPeriodMonths: 24,
+            floatingRate: 9.5,
         },
     });
 
@@ -55,6 +69,11 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
     const downPaymentPercent = watch('downPaymentPercent');
     const loanTenure = watch('loanTenure');
     const interestRate = watch('interestRate');
+    const loanType = watch('loanType');
+    const rateIncreasePercent = watch('rateIncreasePercent') || 0.25;
+    const rateChangeFrequencyMonths = watch('rateChangeFrequencyMonths') || 12;
+    const fixedPeriodMonths = watch('fixedPeriodMonths') || 24;
+    const floatingRate = watch('floatingRate') || 9.5;
 
     // Auto-calculate EMI when inputs change
     useEffect(() => {
@@ -72,7 +91,6 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
     }, [propertyValue, downPaymentPercent, loanTenure, interestRate]);
 
     // Handle property value input with Indian formatting
-    // Handle property value input with Indian formatting
     const handlePropertyValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const rawValue = e.target.value.replace(/[^0-9]/g, '');
         if (rawValue) {
@@ -80,6 +98,7 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
             setValue('propertyValue', numValue);
             setFormattedPropertyValue(rawValue);
         } else {
+            setValue('propertyValue', 0);
             setFormattedPropertyValue('');
         }
     };
@@ -104,6 +123,11 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
             interestRate: data.interestRate,
             loanTenure: data.loanTenure,
             loanType: data.loanType,
+            // Include floating/hybrid fields
+            rateIncreasePercent: data.rateIncreasePercent,
+            rateChangeFrequencyMonths: data.rateChangeFrequencyMonths,
+            fixedPeriodMonths: data.fixedPeriodMonths,
+            floatingRate: data.floatingRate,
         };
 
         onCalculate(loanInputs);
@@ -155,7 +179,7 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
                         type="range"
                         min="10"
                         max="90"
-                        step="5"
+                        step="0.05"
                         {...register('downPaymentPercent', { valueAsNumber: true })}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                         aria-label="Down payment percentage"
@@ -189,7 +213,7 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
                         type="range"
                         min="5"
                         max="20"
-                        step="0.1"
+                        step="0.05"
                         {...register('interestRate', { valueAsNumber: true })}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                         aria-label="Interest rate percentage per annum"
@@ -217,7 +241,7 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
                         type="range"
                         min="1"
                         max="30"
-                        step="1"
+                        step="0.05"
                         {...register('loanTenure', { valueAsNumber: true })}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                         aria-label="Loan tenure in years"
@@ -254,10 +278,44 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
                     {errors.loanType && (
                         <p id="loanType-error" className="mt-1 text-sm text-red-600" role="alert">{errors.loanType.message}</p>
                     )}
-                    <p id="loanType-help" className="mt-1 text-xs text-gray-500">
-                        Note: Loan type differentiation is a future enhancement. Currently uses fixed rate for calculations.
-                    </p>
                 </div>
+
+                {/* Conditional: Floating Rate Inputs */}
+                {loanType === 'floating' && (
+                    <FloatingRateInputs
+                        rateIncreasePercent={rateIncreasePercent}
+                        rateChangeFrequencyMonths={rateChangeFrequencyMonths}
+                        register={register}
+                        setValue={setValue}
+                        errors={errors}
+                        baseRate={interestRate}
+                        tenureYears={loanTenure}
+                    />
+                )}
+
+                {/* Conditional: Hybrid Rate Inputs */}
+                {loanType === 'hybrid' && (
+                    <HybridRateInputs
+                        fixedPeriodMonths={fixedPeriodMonths}
+                        fixedRate={interestRate}
+                        floatingRate={floatingRate}
+                        rateIncreasePercent={rateIncreasePercent}
+                        rateChangeFrequencyMonths={rateChangeFrequencyMonths}
+                        register={register}
+                        setValue={setValue}
+                        errors={errors}
+                        tenureYears={loanTenure}
+                    />
+                )}
+
+                {/* Fixed Rate Note */}
+                {loanType === 'fixed' && (
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <p className="text-xs text-gray-600">
+                            <strong>Fixed Rate:</strong> EMI remains constant throughout the {loanTenure}-year tenure at {interestRate}% p.a.
+                        </p>
+                    </div>
+                )}
 
                 {/* EMI Preview */}
                 {calculationError && (

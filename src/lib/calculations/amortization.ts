@@ -105,9 +105,9 @@ export function generateAmortizationSchedule(
 
     return {
         schedule,
-        totalInterest: Math.round(cumulativeInterest),
-        totalPrincipal: Math.round(cumulativePrincipal),
-        totalAmount: Math.round(cumulativeInterest + cumulativePrincipal),
+        totalInterest: Math.round(cumulativeInterest * 100) / 100,
+        totalPrincipal: Math.round(cumulativePrincipal * 100) / 100,
+        totalAmount: Math.round((cumulativeInterest + cumulativePrincipal) * 100) / 100,
     };
 }
 
@@ -165,9 +165,9 @@ export function generateYearlySummary(
         .map(([year, data]) => ({
             year,
             ...data,
-            totalEMI: Math.round(data.totalEMI),
-            totalInterest: Math.round(data.totalInterest),
-            totalPrincipal: Math.round(data.totalPrincipal),
+            totalEMI: Math.round(data.totalEMI * 100) / 100,
+            totalInterest: Math.round(data.totalInterest * 100) / 100,
+            totalPrincipal: Math.round(data.totalPrincipal * 100) / 100,
         }))
         .sort((a, b) => a.year - b.year);
 }
@@ -228,9 +228,9 @@ export function getYearBreakdown(
 
     return {
         year,
-        principal: Math.round(totalPrincipal),
-        interest: Math.round(totalInterest),
-        emi: Math.round(totalEMI),
+        principal: Math.round(totalPrincipal * 100) / 100,
+        interest: Math.round(totalInterest * 100) / 100,
+        emi: Math.round(totalEMI * 100) / 100,
     };
 }
 
@@ -321,9 +321,9 @@ export function generateScheduleWithLumpSum(
 
     return {
         schedule,
-        totalInterest: Math.round(cumulativeInterest),
-        totalPrincipal: Math.round(cumulativePrincipal),
-        totalAmount: Math.round(cumulativeInterest + cumulativePrincipal),
+        totalInterest: Math.round(cumulativeInterest * 100) / 100,
+        totalPrincipal: Math.round(cumulativePrincipal * 100) / 100,
+        totalAmount: Math.round((cumulativeInterest + cumulativePrincipal) * 100) / 100,
     };
 }
 
@@ -352,8 +352,8 @@ export function compareSchedules(
 
     return {
         monthsSaved,
-        interestSaved: Math.round(interestSaved),
-        totalSaved: Math.round(totalSaved),
+        interestSaved: Math.round(interestSaved * 100) / 100,
+        totalSaved: Math.round(totalSaved * 100) / 100,
         percentageSaved: Math.round(percentageSaved * 100) / 100,
     };
 }

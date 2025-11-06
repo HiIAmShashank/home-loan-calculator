@@ -5,19 +5,61 @@
 
 import { memo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import type { LoanInputs } from '@/lib/types';
 import { generateAmortizationSchedule } from '@/lib/calculations/amortization';
+import { generateFloatingRateSchedule, generatePeriodicRateChanges } from '@/lib/calculations/floatingRate';
+import { generateHybridRateSchedule } from '@/lib/calculations/hybridRate';
 import { formatIndianCurrency, formatToLakhsCrores } from '@/lib/utils';
 
 interface EMIBreakdownChartProps {
     loanAmount: number;
     interestRate: number;
     tenureYears: number;
+    loanInputs?: LoanInputs;
 }
 
 const COLORS = ['#3b82f6', '#f97316'];
 
-function EMIBreakdownChartComponent({ loanAmount, interestRate, tenureYears }: EMIBreakdownChartProps) {
-    const schedule = generateAmortizationSchedule(loanAmount, interestRate, tenureYears);
+function EMIBreakdownChartComponent({ loanAmount, interestRate, tenureYears, loanInputs }: EMIBreakdownChartProps) {
+    // Route to appropriate calculation based on loan type
+    let result;
+    if (loanInputs?.loanType === 'floating' && loanInputs.rateIncreasePercent && loanInputs.rateChangeFrequencyMonths) {
+        const totalMonths = tenureYears * 12;
+        const rateChanges = generatePeriodicRateChanges(
+            interestRate,
+            loanInputs.rateIncreasePercent,
+            loanInputs.rateChangeFrequencyMonths,
+            totalMonths
+        );
+        result = generateFloatingRateSchedule(
+            loanAmount,
+            interestRate,
+            tenureYears,
+            rateChanges
+        );
+    } else if (loanInputs?.loanType === 'hybrid' && loanInputs.fixedPeriodMonths && loanInputs.floatingRate) {
+        const totalMonths = tenureYears * 12;
+        const floatingRateChanges = loanInputs.rateIncreasePercent && loanInputs.rateChangeFrequencyMonths
+            ? generatePeriodicRateChanges(
+                loanInputs.floatingRate,
+                loanInputs.rateIncreasePercent,
+                loanInputs.rateChangeFrequencyMonths,
+                totalMonths
+            ).filter(change => change.fromMonth > loanInputs.fixedPeriodMonths!)
+            : [];
+        result = generateHybridRateSchedule(
+            loanAmount,
+            interestRate,
+            loanInputs.floatingRate,
+            loanInputs.fixedPeriodMonths,
+            tenureYears,
+            floatingRateChanges
+        );
+    } else {
+        result = generateAmortizationSchedule(loanAmount, interestRate, tenureYears);
+    }
+
+    const schedule = result;
 
     const data = [
         {

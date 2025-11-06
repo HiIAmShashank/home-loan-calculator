@@ -9,6 +9,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { calculateEMI } from '@/lib/calculations/emi';
 import { generateAmortizationSchedule } from '@/lib/calculations/amortization';
+import { generateFloatingRateSchedule, generatePeriodicRateChanges, calculateAverageRate } from '@/lib/calculations/floatingRate';
+import { generateHybridRateSchedule, calculateHybridAverageRate } from '@/lib/calculations/hybridRate';
 import { formatIndianCurrency, formatToLakhsCrores } from '@/lib/utils';
 import { ComparisonChart } from '@/components/charts/ComparisonChart';
 import { RadarComparisonChart } from '@/components/charts/RadarComparisonChart';
@@ -26,9 +28,15 @@ interface Scenario {
     loanAmount: number;
     interestRate: number;
     tenureYears: number;
+    loanType?: 'fixed' | 'floating' | 'hybrid';
+    rateIncreasePercent?: number;
+    rateChangeFrequencyMonths?: number;
+    fixedPeriodMonths?: number;
+    floatingRate?: number;
     emi?: number;
     totalInterest?: number;
     totalAmount?: number;
+    averageRate?: number;
 }
 
 // ============================================================================
@@ -40,6 +48,11 @@ const scenarioSchema = z.object({
     loanAmount: z.number().min(100000).max(100000000),
     interestRate: z.number().min(5).max(20),
     tenureYears: z.number().min(1).max(30),
+    loanType: z.enum(['fixed', 'floating', 'hybrid']).optional(),
+    rateIncreasePercent: z.number().min(0).max(5).optional(),
+    rateChangeFrequencyMonths: z.number().min(1).max(60).optional(),
+    fixedPeriodMonths: z.number().min(1).max(360).optional(),
+    floatingRate: z.number().min(5).max(20).optional(),
 });
 
 type ScenarioFormData = z.infer<typeof scenarioSchema>;
@@ -56,6 +69,7 @@ export function LoanComparison() {
             loanAmount: 5000000,
             interestRate: 8.5,
             tenureYears: 20,
+            loanType: 'fixed',
         },
     ]);
 
@@ -65,20 +79,75 @@ export function LoanComparison() {
         register,
         handleSubmit,
         reset,
+        watch,
         formState: { errors },
     } = useForm<ScenarioFormData>({
         resolver: zodResolver(scenarioSchema),
     });
 
+    const watchLoanType = watch('loanType');
+
     // Calculate results for all scenarios
     const scenariosWithResults = scenarios.map(scenario => {
-        const emi = calculateEMI(scenario.loanAmount, scenario.interestRate, scenario.tenureYears);
-        const schedule = generateAmortizationSchedule(scenario.loanAmount, scenario.interestRate, scenario.tenureYears);
+        const loanType = scenario.loanType || 'fixed';
+        let emi: number;
+        let schedule: any;
+        let averageRate = scenario.interestRate;
+
+        if (loanType === 'floating' && scenario.rateIncreasePercent !== undefined && scenario.rateChangeFrequencyMonths) {
+            // Floating rate calculation
+            const rateChanges = generatePeriodicRateChanges(
+                scenario.interestRate,
+                scenario.rateIncreasePercent,
+                scenario.rateChangeFrequencyMonths,
+                scenario.tenureYears * 12
+            );
+            schedule = generateFloatingRateSchedule(
+                scenario.loanAmount,
+                scenario.interestRate,
+                scenario.tenureYears,
+                rateChanges
+            );
+            emi = schedule.schedule[0]?.emi || 0;
+            averageRate = calculateAverageRate(schedule.schedule, rateChanges, scenario.interestRate);
+        } else if (loanType === 'hybrid' && scenario.fixedPeriodMonths && scenario.floatingRate &&
+            scenario.rateIncreasePercent !== undefined && scenario.rateChangeFrequencyMonths) {
+            // Hybrid rate calculation
+            const totalMonths = scenario.tenureYears * 12;
+            const rateChanges = generatePeriodicRateChanges(
+                scenario.floatingRate,
+                scenario.rateIncreasePercent,
+                scenario.rateChangeFrequencyMonths,
+                totalMonths
+            ).filter(change => change.fromMonth > scenario.fixedPeriodMonths!);
+
+            schedule = generateHybridRateSchedule(
+                scenario.loanAmount,
+                scenario.interestRate,
+                scenario.floatingRate,
+                scenario.fixedPeriodMonths,
+                scenario.tenureYears,
+                rateChanges
+            );
+            emi = schedule.schedule[0]?.emi || 0;
+            averageRate = calculateHybridAverageRate(
+                schedule.schedule,
+                scenario.interestRate,
+                scenario.floatingRate,
+                scenario.fixedPeriodMonths
+            );
+        } else {
+            // Fixed rate calculation (default)
+            emi = calculateEMI(scenario.loanAmount, scenario.interestRate, scenario.tenureYears);
+            schedule = generateAmortizationSchedule(scenario.loanAmount, scenario.interestRate, scenario.tenureYears);
+        }
+
         return {
             ...scenario,
             emi,
             totalInterest: schedule.totalInterest,
             totalAmount: schedule.totalAmount,
+            averageRate,
         };
     });
 
@@ -97,6 +166,7 @@ export function LoanComparison() {
                 loanAmount: 5000000,
                 interestRate: 8.5,
                 tenureYears: 20,
+                loanType: 'fixed',
             },
         ]);
     };
@@ -113,6 +183,11 @@ export function LoanComparison() {
             loanAmount: scenario.loanAmount,
             interestRate: scenario.interestRate,
             tenureYears: scenario.tenureYears,
+            loanType: scenario.loanType,
+            rateIncreasePercent: scenario.rateIncreasePercent,
+            rateChangeFrequencyMonths: scenario.rateChangeFrequencyMonths,
+            fixedPeriodMonths: scenario.fixedPeriodMonths,
+            floatingRate: scenario.floatingRate,
         });
     };
 
@@ -130,7 +205,7 @@ export function LoanComparison() {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto p-6 space-y-6" role="region" aria-labelledby="comparison-heading">
+        <div className="w-full p-6 space-y-6" role="region" aria-labelledby="comparison-heading">
             {/* Header */}
             <div className="text-center space-y-2">
                 <h1 id="comparison-heading" className="text-3xl font-bold text-gray-900">Loan Comparison</h1>
@@ -197,22 +272,44 @@ export function LoanComparison() {
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Loan Type</span>
+                                            <span className="font-semibold capitalize">
+                                                {scenario.loanType || 'Fixed'}
+                                                {scenario.loanType === 'floating' && ' 🔄'}
+                                                {scenario.loanType === 'hybrid' && ' 🔀'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
                                             <span className="text-gray-600">Loan Amount</span>
                                             <span className="font-semibold">{formatToLakhsCrores(scenario.loanAmount)}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600">Interest Rate</span>
+                                            <span className="text-gray-600">{scenario.loanType === 'hybrid' ? 'Fixed Rate' : 'Interest Rate'}</span>
                                             <span className="font-semibold">{scenario.interestRate}%</span>
                                         </div>
+                                        {scenario.loanType === 'hybrid' && scenario.floatingRate && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-600">Floating Rate</span>
+                                                <span className="font-semibold">{scenario.floatingRate}%</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between text-sm">
                                             <span className="text-gray-600">Tenure</span>
                                             <span className="font-semibold">{scenario.tenureYears} years</span>
                                         </div>
+                                        {(scenario.loanType === 'floating' || scenario.loanType === 'hybrid') && scenario.averageRate && (
+                                            <div className="flex justify-between text-sm bg-yellow-50 -mx-2 px-2 py-1 rounded">
+                                                <span className="text-gray-600">Avg Rate</span>
+                                                <span className="font-semibold text-yellow-800">{scenario.averageRate.toFixed(2)}%</span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="border-t pt-4 space-y-3">
                                         <div className="bg-blue-50 p-3 rounded" role="article" aria-labelledby={`emi-${scenario.id}`}>
-                                            <div id={`emi-${scenario.id}`} className="text-xs text-gray-600 mb-1">Monthly EMI</div>
+                                            <div id={`emi-${scenario.id}`} className="text-xs text-gray-600 mb-1">
+                                                {(scenario.loanType === 'floating' || scenario.loanType === 'hybrid') ? 'Initial EMI' : 'Monthly EMI'}
+                                            </div>
                                             <div className="text-2xl font-bold text-blue-600" role="status" aria-live="polite">
                                                 {formatIndianCurrency(scenario.emi!)}
                                             </div>
@@ -254,6 +351,21 @@ export function LoanComparison() {
                                     </div>
 
                                     <div>
+                                        <label htmlFor={`loanType-${scenario.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                                            Loan Type
+                                        </label>
+                                        <select
+                                            id={`loanType-${scenario.id}`}
+                                            {...register('loanType')}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        >
+                                            <option value="fixed">Fixed Rate</option>
+                                            <option value="floating">Floating Rate</option>
+                                            <option value="hybrid">Hybrid Rate</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
                                         <label htmlFor={`loanAmount-${scenario.id}`} className="block text-sm font-medium text-gray-700 mb-1">
                                             Loan Amount (₹)
                                         </label>
@@ -272,12 +384,12 @@ export function LoanComparison() {
 
                                     <div>
                                         <label htmlFor={`interestRate-${scenario.id}`} className="block text-sm font-medium text-gray-700 mb-1">
-                                            Interest Rate (%)
+                                            {watchLoanType === 'hybrid' ? 'Fixed Period Rate (%)' : 'Interest Rate (%)'}
                                         </label>
                                         <input
                                             id={`interestRate-${scenario.id}`}
                                             type="number"
-                                            step="0.1"
+                                            step="0.05"
                                             {...register('interestRate', { valueAsNumber: true })}
                                             aria-invalid={!!errors.interestRate}
                                             aria-describedby={errors.interestRate ? `interestRate-error-${scenario.id}` : undefined}
@@ -287,6 +399,64 @@ export function LoanComparison() {
                                             <p id={`interestRate-error-${scenario.id}`} role="alert" className="text-red-500 text-xs mt-1">{errors.interestRate.message}</p>
                                         )}
                                     </div>
+
+                                    {watchLoanType === 'hybrid' && (
+                                        <>
+                                            <div>
+                                                <label htmlFor={`floatingRate-${scenario.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Floating Rate (%)
+                                                </label>
+                                                <input
+                                                    id={`floatingRate-${scenario.id}`}
+                                                    type="number"
+                                                    step="0.05"
+                                                    {...register('floatingRate', { valueAsNumber: true })}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label htmlFor={`fixedPeriodMonths-${scenario.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Fixed Period (Months)
+                                                </label>
+                                                <input
+                                                    id={`fixedPeriodMonths-${scenario.id}`}
+                                                    type="number"
+                                                    {...register('fixedPeriodMonths', { valueAsNumber: true })}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {(watchLoanType === 'floating' || watchLoanType === 'hybrid') && (
+                                        <>
+                                            <div>
+                                                <label htmlFor={`rateIncreasePercent-${scenario.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Rate Change (%)
+                                                </label>
+                                                <input
+                                                    id={`rateIncreasePercent-${scenario.id}`}
+                                                    type="number"
+                                                    step="0.05"
+                                                    {...register('rateIncreasePercent', { valueAsNumber: true })}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                                    placeholder="0.10"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label htmlFor={`rateChangeFrequencyMonths-${scenario.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Change Frequency (Months)
+                                                </label>
+                                                <input
+                                                    id={`rateChangeFrequencyMonths-${scenario.id}`}
+                                                    type="number"
+                                                    {...register('rateChangeFrequencyMonths', { valueAsNumber: true })}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                                    placeholder="12"
+                                                />
+                                            </div>
+                                        </>
+                                    )}
 
                                     <div>
                                         <label htmlFor={`tenureYears-${scenario.id}`} className="block text-sm font-medium text-gray-700 mb-1">
@@ -353,6 +523,14 @@ export function LoanComparison() {
                             </thead>
                             <tbody>
                                 <tr className="border-b border-gray-100">
+                                    <td className="py-3 px-4 text-gray-700 font-medium">Loan Type</td>
+                                    {scenariosWithResults.map(scenario => (
+                                        <td key={scenario.id} className="py-3 px-4 text-right capitalize">
+                                            {scenario.loanType || 'Fixed'}
+                                        </td>
+                                    ))}
+                                </tr>
+                                <tr className="border-b border-gray-100">
                                     <td className="py-3 px-4 text-gray-700 font-medium">Loan Amount</td>
                                     {scenariosWithResults.map(scenario => (
                                         <td key={scenario.id} className="py-3 px-4 text-right">
@@ -368,6 +546,19 @@ export function LoanComparison() {
                                         </td>
                                     ))}
                                 </tr>
+                                {scenariosWithResults.some(s => (s.loanType === 'floating' || s.loanType === 'hybrid') && s.averageRate) && (
+                                    <tr className="border-b border-gray-100 bg-yellow-50">
+                                        <td className="py-3 px-4 text-gray-700 font-medium">Average Rate</td>
+                                        {scenariosWithResults.map(scenario => (
+                                            <td key={scenario.id} className="py-3 px-4 text-right text-yellow-800 font-semibold">
+                                                {(scenario.loanType === 'floating' || scenario.loanType === 'hybrid') && scenario.averageRate
+                                                    ? `${scenario.averageRate.toFixed(2)}%`
+                                                    : '—'
+                                                }
+                                            </td>
+                                        ))}
+                                    </tr>
+                                )}
                                 <tr className="border-b border-gray-100">
                                     <td className="py-3 px-4 text-gray-700 font-medium">Tenure</td>
                                     {scenariosWithResults.map(scenario => (
@@ -377,7 +568,11 @@ export function LoanComparison() {
                                     ))}
                                 </tr>
                                 <tr className="border-b border-gray-100 bg-blue-50">
-                                    <td className="py-3 px-4 text-gray-900 font-bold">Monthly EMI</td>
+                                    <td className="py-3 px-4 text-gray-900 font-bold">
+                                        {scenariosWithResults.some(s => s.loanType === 'floating' || s.loanType === 'hybrid')
+                                            ? 'Initial EMI'
+                                            : 'Monthly EMI'}
+                                    </td>
                                     {scenariosWithResults.map(scenario => (
                                         <td key={scenario.id} className="py-3 px-4 text-right font-bold text-blue-600">
                                             {formatIndianCurrency(scenario.emi!)}
