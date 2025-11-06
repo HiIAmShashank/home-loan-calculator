@@ -13,6 +13,8 @@ import {
     compareSchedules
 } from '@/lib/calculations/amortization';
 import { formatIndianCurrency } from '@/lib/utils';
+import { AmountInWords } from '@/components/ui/AmountInWords';
+import { AmountWithTooltip } from '@/components/ui/AmountWithTooltip';
 
 const prepaymentFormSchema = z.object({
     principal: z.number().min(100000).max(100000000),
@@ -62,6 +64,7 @@ export function PrepaymentCalculator({
 
     const prepaymentType = watch('prepaymentType');
     const prepaymentAmount = watch('prepaymentAmount');
+    const principal = watch('principal');
 
     const onSubmit = (data: PrepaymentFormData) => {
         const base = generateAmortizationSchedule(data.principal, data.annualRate, data.tenureYears);
@@ -122,7 +125,6 @@ export function PrepaymentCalculator({
     return (
         <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow" role="region" aria-labelledby="prepay-calc-heading">
-                <h2 id="prepay-calc-heading" className="text-2xl font-bold text-gray-900 mb-4">Prepayment Calculator</h2>
                 <p className="text-sm text-gray-600 mb-6">
                     See how extra payments can reduce your loan tenure and save on interest
                 </p>
@@ -139,6 +141,7 @@ export function PrepaymentCalculator({
                                 {...register('principal', { valueAsNumber: true })}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                             />
+                            {principal > 0 && <AmountInWords amount={principal} className="mt-1" />}
                             {errors.principal && (
                                 <p className="mt-1 text-sm text-red-600">{errors.principal.message}</p>
                             )}
@@ -223,6 +226,7 @@ export function PrepaymentCalculator({
                             {errors.prepaymentAmount && (
                                 <p className="mt-1 text-sm text-red-600">{errors.prepaymentAmount.message}</p>
                             )}
+                            {(prepaymentAmount ?? 0) > 0 && <AmountInWords amount={prepaymentAmount ?? 0} className="mt-1" />}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -284,6 +288,7 @@ export function PrepaymentCalculator({
                         <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-lg shadow">
                             <p className="text-sm opacity-90 mb-1">Interest Saved</p>
                             <p className="text-3xl font-bold">{formatIndianCurrency(comparison.interestSaved)}</p>
+                            <AmountInWords amount={comparison.interestSaved} className="text-sm opacity-90 mt-2" variant="light" />
                         </div>
                         <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow">
                             <p className="text-sm opacity-90 mb-1">Months Saved</p>
@@ -293,6 +298,7 @@ export function PrepaymentCalculator({
                         <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow">
                             <p className="text-sm opacity-90 mb-1">Total Savings</p>
                             <p className="text-3xl font-bold">{formatIndianCurrency(comparison.totalSaved)}</p>
+                            <AmountInWords amount={comparison.totalSaved} className="text-sm opacity-90 mt-2" variant="light" />
                         </div>
                     </div>
 
@@ -313,25 +319,25 @@ export function PrepaymentCalculator({
                                     <tr>
                                         <td className="px-6 py-4 text-sm text-gray-900">Total Interest</td>
                                         <td className="px-6 py-4 text-sm text-right text-gray-900">
-                                            {formatIndianCurrency(baseSchedule?.totalInterest || 0)}
+                                            <AmountWithTooltip amount={baseSchedule?.totalInterest || 0} />
                                         </td>
                                         <td className="px-6 py-4 text-sm text-right text-blue-600 font-medium">
-                                            {formatIndianCurrency(prepaySchedule?.totalInterest || 0)}
+                                            <AmountWithTooltip amount={prepaySchedule?.totalInterest || 0} />
                                         </td>
                                         <td className="px-6 py-4 text-sm text-right text-green-600 font-medium">
-                                            -{formatIndianCurrency(comparison.interestSaved)}
+                                            -<AmountWithTooltip amount={comparison.interestSaved} />
                                         </td>
                                     </tr>
                                     <tr>
                                         <td className="px-6 py-4 text-sm text-gray-900">Total Amount Paid</td>
                                         <td className="px-6 py-4 text-sm text-right text-gray-900">
-                                            {formatIndianCurrency(baseSchedule?.totalAmount || 0)}
+                                            <AmountWithTooltip amount={baseSchedule?.totalAmount || 0} />
                                         </td>
                                         <td className="px-6 py-4 text-sm text-right text-blue-600 font-medium">
-                                            {formatIndianCurrency(prepaySchedule?.totalAmount || 0)}
+                                            <AmountWithTooltip amount={prepaySchedule?.totalAmount || 0} />
                                         </td>
                                         <td className="px-6 py-4 text-sm text-right text-green-600 font-medium">
-                                            -{formatIndianCurrency(comparison.totalSaved)}
+                                            -<AmountWithTooltip amount={comparison.totalSaved} />
                                         </td>
                                     </tr>
                                     <tr>

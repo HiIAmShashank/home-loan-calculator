@@ -13,6 +13,7 @@ import {
 } from '@/lib/calculations/affordability';
 import { formatIndianCurrency, formatToLakhsCrores } from '@/lib/utils';
 import type { AffordabilityResult } from '@/lib/types';
+import { AmountInWords } from '@/components/ui/AmountInWords';
 
 // ============================================================================
 // FORM SCHEMA
@@ -80,11 +81,6 @@ export function AffordabilityCalculator() {
 
     return (
         <div className="w-full p-6 space-y-6" role="region" aria-labelledby="afford-calc-heading">
-            {/* Header */}
-            <div className="text-center space-y-2">
-                <h1 id="afford-calc-heading" className="text-3xl font-bold text-gray-900">Affordability Calculator</h1>
-                <p className="text-gray-600">Calculate maximum affordable loan based on your income</p>
-            </div>
 
             {/* Info Banner */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" role="complementary" aria-label="FOIR calculation information">
@@ -116,6 +112,7 @@ export function AffordabilityCalculator() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                             placeholder="₹1,00,000"
                         />
+                        {formValues.monthlyIncome > 0 && <AmountInWords amount={formValues.monthlyIncome} className="mt-1" />}
                         {errors.monthlyIncome && (
                             <p className="text-red-500 text-sm mt-1">{errors.monthlyIncome.message}</p>
                         )}
@@ -131,6 +128,7 @@ export function AffordabilityCalculator() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                             placeholder="₹0"
                         />
+                        {(formValues.coApplicantIncome ?? 0) > 0 && <AmountInWords amount={formValues.coApplicantIncome ?? 0} className="mt-1" />}
                         {errors.coApplicantIncome && (
                             <p className="text-red-500 text-sm mt-1">{errors.coApplicantIncome.message}</p>
                         )}
@@ -157,6 +155,7 @@ export function AffordabilityCalculator() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                             placeholder="₹0"
                         />
+                        {(formValues.existingEMIs ?? 0) > 0 && <AmountInWords amount={formValues.existingEMIs ?? 0} className="mt-1" />}
                         <p className="text-xs text-gray-500 mt-1">Car loan, personal loan, etc.</p>
                     </div>
 
@@ -170,6 +169,7 @@ export function AffordabilityCalculator() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                             placeholder="₹0"
                         />
+                        {(formValues.otherObligations ?? 0) > 0 && <AmountInWords amount={formValues.otherObligations ?? 0} className="mt-1" />}
                         <p className="text-xs text-gray-500 mt-1">Credit card payments, etc.</p>
                     </div>
                 </div>
@@ -187,6 +187,7 @@ export function AffordabilityCalculator() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         placeholder="₹15,00,000"
                     />
+                    {formValues.downPaymentAvailable > 0 && <AmountInWords amount={formValues.downPaymentAvailable} className="mt-1" />}
                     {errors.downPaymentAvailable && (
                         <p className="text-red-500 text-sm mt-1">{errors.downPaymentAvailable.message}</p>
                     )}
@@ -266,16 +267,19 @@ export function AffordabilityCalculator() {
                         <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-6">
                             <div className="text-sm opacity-90 mb-1">Maximum Loan Amount</div>
                             <div className="text-3xl font-bold">{formatToLakhsCrores(result.maxLoanAmount)}</div>
+                            <AmountInWords amount={result.maxLoanAmount} className="text-sm opacity-90 mt-2" variant="light" />
                         </div>
 
                         <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-6">
                             <div className="text-sm opacity-90 mb-1">Maximum Property Value</div>
                             <div className="text-3xl font-bold">{formatToLakhsCrores(result.maxPropertyValue)}</div>
+                            <AmountInWords amount={result.maxPropertyValue} className="text-sm opacity-90 mt-2" variant="light" />
                         </div>
 
                         <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-6">
                             <div className="text-sm opacity-90 mb-1">Maximum EMI</div>
                             <div className="text-3xl font-bold">{formatIndianCurrency(result.maxAffordableEMI)}</div>
+                            <AmountInWords amount={result.maxAffordableEMI} className="text-sm opacity-90 mt-2" variant="light" />
                         </div>
                     </div>
 

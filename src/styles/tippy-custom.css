@@ -1,0 +1,68 @@
+/**
+ * Custom Tippy.js Themes for Amount Tooltips
+ */
+
+/* Light border theme for amount tooltips */
+.tippy-box[data-theme~='light-border'] {
+    background-color: #ffffff;
+    color: #1f2937;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.tippy-box[data-theme~='light-border'][data-placement^='top']>.tippy-arrow::before {
+    border-top-color: #ffffff;
+}
+
+.tippy-box[data-theme~='light-border'][data-placement^='bottom']>.tippy-arrow::before {
+    border-bottom-color: #ffffff;
+}
+
+.tippy-box[data-theme~='light-border'][data-placement^='left']>.tippy-arrow::before {
+    border-left-color: #ffffff;
+}
+
+.tippy-box[data-theme~='light-border'][data-placement^='right']>.tippy-arrow::before {
+    border-right-color: #ffffff;
+}
+
+/* Arrow border styling */
+.tippy-box[data-theme~='light-border']>.tippy-arrow::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    border-color: transparent;
+    border-style: solid;
+}
+
+.tippy-box[data-theme~='light-border'][data-placement^='top']>.tippy-arrow::after {
+    border-top-color: #e5e7eb;
+    border-width: 7px 7px 0;
+    top: 17px;
+    left: 1px;
+}
+
+.tippy-box[data-theme~='light-border'][data-placement^='bottom']>.tippy-arrow::after {
+    border-bottom-color: #e5e7eb;
+    border-width: 0 7px 7px;
+    bottom: 17px;
+    left: 1px;
+}
+
+.tippy-box[data-theme~='light-border'][data-placement^='left']>.tippy-arrow::after {
+    border-left-color: #e5e7eb;
+    border-width: 7px 0 7px 7px;
+    left: 17px;
+    top: 1px;
+}
+
+.tippy-box[data-theme~='light-border'][data-placement^='right']>.tippy-arrow::after {
+    border-right-color: #e5e7eb;
+    border-width: 7px 7px 7px 0;
+    right: 17px;
+    top: 1px;
+}

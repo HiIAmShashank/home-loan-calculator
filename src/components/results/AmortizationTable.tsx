@@ -9,6 +9,7 @@ import { generateAmortizationSchedule, generateYearlySummary } from '@/lib/calcu
 import { generateFloatingRateSchedule, generatePeriodicRateChanges } from '@/lib/calculations/floatingRate';
 import { generateHybridRateSchedule } from '@/lib/calculations/hybridRate';
 import { formatIndianCurrency } from '@/lib/utils';
+import { AmountWithTooltip } from '@/components/ui/AmountWithTooltip';
 import { exportMonthlyScheduleToCSV, exportYearlySummaryToCSV } from '@/lib/utils/export';
 import { HiArrowDownTray } from 'react-icons/hi2';
 
@@ -241,16 +242,16 @@ function AmortizationTableComponent({
                                         {view === 'monthly' ? `Month ${row.period}` : `Year ${row.period}`}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                                        {formatIndianCurrency(row.emi)}
+                                        <AmountWithTooltip amount={row.emi} />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-600 font-medium">
-                                        {formatIndianCurrency(row.principal)}
+                                        <AmountWithTooltip amount={row.principal} />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-orange-600 font-medium">
-                                        {formatIndianCurrency(row.interest)}
+                                        <AmountWithTooltip amount={row.interest} />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
-                                        {formatIndianCurrency(row.outstanding)}
+                                        <AmountWithTooltip amount={row.outstanding} />
                                     </td>
                                 </tr>
                             ))}
