@@ -11,6 +11,7 @@ import type { LoanInputs } from '@/lib/types';
 import { calculateEMI } from '@/lib/calculations/emi';
 import { formatIndianCurrency } from '@/lib/utils';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { AmountInWords } from '@/components/ui/AmountInWords';
 import { FloatingRateInputs } from './FloatingRateInputs';
 import { HybridRateInputs } from './HybridRateInputs';
 
@@ -164,6 +165,7 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
                     {errors.propertyValue && (
                         <p id="propertyValue-error" className="mt-1 text-sm text-red-600" role="alert">{errors.propertyValue.message}</p>
                     )}
+                    {propertyValue > 0 && <AmountInWords amount={propertyValue} className="mt-1" />}
                     <p id="propertyValue-help" className="mt-1 text-xs text-gray-500">
                         Enter property market value
                     </p>
@@ -191,6 +193,7 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
                     {errors.downPaymentPercent && (
                         <p id="downPaymentPercent-error" className="mt-1 text-sm text-red-600" role="alert">{errors.downPaymentPercent.message}</p>
                     )}
+                    {downPaymentAmount > 0 && <AmountInWords amount={downPaymentAmount} className="mt-1" />}
                     <div className="flex justify-between text-xs text-gray-500 mt-1">
                         <span>10% (Min)</span>
                         <span>90% (Max)</span>
@@ -201,6 +204,7 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
                 <div className="bg-blue-50 p-3 rounded-md" role="status" aria-live="polite" aria-atomic="true">
                     <p className="text-sm text-gray-600" id="loanAmount-label">Loan Amount</p>
                     <p className="text-2xl font-bold text-blue-600" aria-labelledby="loanAmount-label">{formatIndianCurrency(loanAmount)}</p>
+                    {loanAmount > 0 && <AmountInWords amount={loanAmount} className="mt-1" />}
                 </div>
 
                 {/* Interest Rate */}
