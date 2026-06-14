@@ -12,7 +12,7 @@ import {
     SECTION_80EEA_PROPERTY_VALUE_LIMIT,
 } from '../constants';
 import { getTaxConfig, DEFAULT_FINANCIAL_YEAR } from '../taxConfig';
-import type { FinancialYear, TaxSlab } from '../taxConfig';
+import type { FinancialYear, TaxSlab, RebateConfig } from '../taxConfig';
 import type { DeductionResult, TaxInputs, TaxBreakdown, TaxRegime } from '../types';
 
 /**
@@ -34,6 +34,17 @@ function computeSlabTax(taxableIncome: number, slabs: TaxSlab[]): number {
     }
 
     return tax;
+}
+
+/**
+ * Compute the Section 87A rebate: a full rebate of computed tax, capped at
+ * rebate.maxRebate, when taxable income is at or below rebate.incomeThreshold.
+ * Applied to tax before the Health & Education cess. (Marginal relief just
+ * above the threshold is not modelled — tracked in the Open Backlog.)
+ */
+function computeRebate(taxableIncome: number, taxBeforeCess: number, rebate: RebateConfig): number {
+    if (taxableIncome > rebate.incomeThreshold) return 0;
+    return Math.min(taxBeforeCess, rebate.maxRebate);
 }
 
 /**
@@ -139,6 +150,9 @@ export function calculateTaxOld(
 
     let tax = computeSlabTax(taxableIncome, regime.slabs);
 
+    // Section 87A rebate, applied before cess
+    tax -= computeRebate(taxableIncome, tax, regime.rebate);
+
     // Add Health & Education Cess
     tax = tax * (1 + config.cessRate);
 
@@ -166,6 +180,9 @@ export function calculateTaxNew(
     const taxableIncome = Math.max(0, income - regime.standardDeduction);
 
     let tax = computeSlabTax(taxableIncome, regime.slabs);
+
+    // Section 87A rebate, applied before cess
+    tax -= computeRebate(taxableIncome, tax, regime.rebate);
 
     // Add Health & Education Cess
     tax = tax * (1 + config.cessRate);
