@@ -78,7 +78,7 @@ export function RentVsBuyCalculator() {
     };
 
     return (
-        <div className="w-full p-6 space-y-6" role="region" aria-labelledby="rent-vs-buy-heading">
+        <div className="w-full p-6 space-y-6" role="region" aria-label="Rent vs Buy calculator">
 
             {/* Info Banner */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" role="complementary" aria-label="Rent vs buy information">
@@ -297,9 +297,9 @@ export function RentVsBuyCalculator() {
                                 </p>
                                 <p className="text-sm opacity-90">
                                     By {formatIndianCurrency(Math.abs(result.difference))} over {appliedInputs.analysisYears} years.
-                                    {result.breakEvenYear > 0
+                                    {result.recommendation === 'buy'
                                         ? ` Buying breaks even in year ${result.breakEvenYear}.`
-                                        : ' Buying does not break even within this horizon.'}
+                                        : ' Buying does not come out ahead within this horizon.'}
                                 </p>
                             </div>
                         </div>
