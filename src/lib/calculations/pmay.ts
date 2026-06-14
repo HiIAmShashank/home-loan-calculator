@@ -148,7 +148,7 @@ export function calculatePMAYSubsidy(inputs: PMAYInputs): PMAYResult {
         subsidyNPV,
         effectiveRate,
         savingsPerMonth: emiAtMarketRate - emiAtSubsidizedRate,
-        totalSavings: subsidyNPV * (subsidyTenure / tenureYears),
+        totalSavings: subsidyNPV,
     };
 }
 
