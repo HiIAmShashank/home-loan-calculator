@@ -64,6 +64,8 @@ function formatMonths(months: number): string {
 
 export function BalanceTransferCalculator() {
     const [result, setResult] = useState<BalanceTransferAnalysis | null>(null);
+    // Submit-time snapshot so result labels reflect what was computed, not live form state.
+    const [appliedKeepSameEMI, setAppliedKeepSameEMI] = useState(false);
 
     const {
         register,
@@ -110,6 +112,7 @@ export function BalanceTransferCalculator() {
                 keepSameEMI: data.keepSameEMI,
             })
         );
+        setAppliedKeepSameEMI(data.keepSameEMI);
     };
 
     return (
@@ -434,7 +437,7 @@ export function BalanceTransferCalculator() {
                                     <span className="font-semibold text-gray-900">
                                         {Number.isFinite(result.savings.breakEvenMonths)
                                             ? formatMonths(result.savings.breakEvenMonths)
-                                            : keepSameEMI ? 'Same EMI — finishes sooner' : 'Never'}
+                                            : appliedKeepSameEMI ? 'Same EMI — finishes sooner' : 'Never'}
                                     </span>
                                 </div>
                             </div>
