@@ -95,6 +95,8 @@ export interface TaxInputs {
     coBorrowerIncome?: number;
     ownershipSplit?: number; // Percentage
     other80CInvestments?: number;
+    /** Loan sanction date (ISO YYYY-MM-DD). Gates Section 80EEA eligibility. */
+    loanSanctionDate?: string;
 }
 
 export interface DeductionResult {

@@ -10,6 +10,8 @@ import {
     SECTION_24B_LIMIT_SELF_OCCUPIED,
     SECTION_80EEA_LIMIT,
     SECTION_80EEA_PROPERTY_VALUE_LIMIT,
+    SECTION_80EEA_SANCTION_START,
+    SECTION_80EEA_SANCTION_END,
 } from '../constants';
 import { getTaxConfig, DEFAULT_FINANCIAL_YEAR } from '../taxConfig';
 import type { FinancialYear, TaxSlab, RebateConfig } from '../taxConfig';
@@ -100,26 +102,36 @@ export function calculate24b(
  * Calculate Section 80EEA deduction (First-time home buyer)
  * 
  * Additional deduction: ₹1,50,000 on interest
- * Conditions:
+ * Conditions (all must hold):
  * - First-time home buyer
  * - Property value ≤ ₹45 lakh
- * - Loan sanctioned between specific dates
- * 
+ * - Loan sanctioned within 1 Apr 2019 – 31 Mar 2022 (inclusive)
+ *
+ * The deduction is unavailable for any loan sanctioned after Mar 2022, so it
+ * defaults OFF: a missing sanction date yields ₹0.
+ *
  * @param isFirstTimeBuyer - Whether buyer is first-time
  * @param propertyValue - Property value
  * @param interestPaid - Interest paid in the year
  * @param section24bUsed - Amount already claimed under 24(b)
+ * @param loanSanctionDate - Loan sanction date (ISO YYYY-MM-DD); undefined = ineligible
  * @returns Additional deduction amount
  */
 export function calculate80EEA(
     isFirstTimeBuyer: boolean,
     propertyValue: number,
     interestPaid: number,
-    section24bUsed: number = 0
+    section24bUsed: number = 0,
+    loanSanctionDate?: string
 ): number {
     // Check eligibility
     if (!isFirstTimeBuyer) return 0;
     if (propertyValue > SECTION_80EEA_PROPERTY_VALUE_LIMIT) return 0;
+    // Sanction-date window gate — default OFF when no date is supplied
+    if (!loanSanctionDate) return 0;
+    if (loanSanctionDate < SECTION_80EEA_SANCTION_START || loanSanctionDate > SECTION_80EEA_SANCTION_END) {
+        return 0;
+    }
 
     // 80EEA is additional to 24(b), so use remaining interest
     const remainingInterest = Math.max(0, interestPaid - section24bUsed);
@@ -209,6 +221,7 @@ export function calculateTaxSavings(
         isFirstTimeBuyer,
         propertyValue,
         other80CInvestments = 0,
+        loanSanctionDate,
     } = inputs;
 
     // Calculate tax under new regime (no deductions)
@@ -217,7 +230,7 @@ export function calculateTaxSavings(
     // Calculate deductions under old regime
     const section80C = calculate80C(principalPaid, other80CInvestments);
     const section24b = calculate24b(interestPaid, false); // Assuming self-occupied
-    const section80EEA = calculate80EEA(isFirstTimeBuyer, propertyValue, interestPaid, section24b);
+    const section80EEA = calculate80EEA(isFirstTimeBuyer, propertyValue, interestPaid, section24b, loanSanctionDate);
 
     const totalDeductions = section80C.deduction + section24b + section80EEA;
 

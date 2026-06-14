@@ -74,6 +74,10 @@ export const SECTION_24B_LIMIT_SELF_OCCUPIED = 200000; // ₹2 lakh
 export const SECTION_24B_LIMIT_LET_OUT = Infinity; // No limit
 export const SECTION_80EEA_LIMIT = 150000; // ₹1.5 lakh additional for first-time buyers
 export const SECTION_80EEA_PROPERTY_VALUE_LIMIT = 4500000; // ₹45 lakh
+// 80EEA is available ONLY for loans sanctioned within this window (inclusive).
+// Not available for any loan sanctioned after 31 Mar 2022. ISO dates (YYYY-MM-DD).
+export const SECTION_80EEA_SANCTION_START = '2019-04-01';
+export const SECTION_80EEA_SANCTION_END = '2022-03-31';
 
 // ============================================================================
 // LTV (Loan-to-Value) LIMITS - RBI NORMS
