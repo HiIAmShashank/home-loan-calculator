@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { calculatePMAYSubsidy } from '@/lib/calculations/pmay'
+import { calculateEMI } from '@/lib/calculations/emi'
 import type { PMAYInputs } from '@/lib/types'
 
 const issBase: PMAYInputs = {
@@ -38,6 +39,16 @@ describe('calculatePMAYSubsidy — PMAY-U 2.0 ISS', () => {
     })
     expect(result.subsidyNPV).toBeLessThan(150000)
     expect(result.effectiveRate).toBeCloseTo(5, 5) // 9 − 4, since eligible slice == whole loan
+
+    // Independently re-derive the NPV: PV of the EMI differential between the market
+    // (9%) and subsidised (9 − 4 = 5%) rate on the ₹2L eligible slice over 12yr,
+    // discounted at 8.5%. Validates the scheme applies its discount rate correctly
+    // (not just that savingsPerMonth scales back to it — the cap-ratio tautology).
+    const gross = calculateEMI(200000, 9, 12) - calculateEMI(200000, 5, 12)
+    const monthlyDiscount = 0.085 / 12
+    let expectedNPV = 0
+    for (let m = 1; m <= 12 * 12; m++) expectedNPV += gross / Math.pow(1 + monthlyDiscount, m)
+    expect(result.subsidyNPV).toBeCloseTo(expectedNPV, 0)
   })
 
   it('is independent of tenure beyond the 12yr horizon (20yr == 25yr == 30yr)', () => {
