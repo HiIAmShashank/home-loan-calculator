@@ -301,7 +301,6 @@ export function calculateJointLoanBenefits(
     // Calculate for primary borrower
     const primaryBreakdown = calculateTaxSavings({
         annualIncome: primaryIncome,
-        taxRegime: 'old',
         principalPaid: primaryPrincipal,
         interestPaid: primaryInterest,
         isFirstTimeBuyer,
@@ -312,7 +311,6 @@ export function calculateJointLoanBenefits(
     // Calculate for co-borrower
     const coBreakdown = calculateTaxSavings({
         annualIncome: coIncome,
-        taxRegime: 'old',
         principalPaid: coPrincipal,
         interestPaid: coInterest,
         isFirstTimeBuyer,

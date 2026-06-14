@@ -268,9 +268,11 @@ export function TaxBenefitsCalculator({
                                 {formatIndianCurrency(taxBreakdown.taxWithLoan)}
                             </p>
                             <AmountInWords amount={taxBreakdown.taxWithLoan} className="mt-2" />
-                            <p className="text-sm text-green-700 mt-3">
-                                Saves {formatIndianCurrency(taxBreakdown.savings)} vs {formatIndianCurrency(taxBreakdown.taxWithoutLoan)} without the loan
-                            </p>
+                            {taxBreakdown.savings > 0 && (
+                                <p className="text-sm text-green-700 mt-3">
+                                    Saves {formatIndianCurrency(taxBreakdown.savings)} vs {formatIndianCurrency(taxBreakdown.taxWithoutLoan)} without the loan
+                                </p>
+                            )}
                         </div>
                         {/* New Regime */}
                         <div className={`p-6 rounded-lg shadow ${taxBreakdown.recommendedRegime === 'new' ? 'bg-blue-50 border-2 border-blue-500' : 'bg-white border border-gray-200'}`}>
@@ -325,15 +327,18 @@ export function TaxBenefitsCalculator({
                         </div>
                     </div>
 
-                    {/* 20-Year Projection */}
-                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow">
-                        <h3 className="text-lg font-bold mb-2">20-Year Cumulative Savings (Old Regime)</h3>
-                        <p className="text-4xl font-bold">{formatIndianCurrency(taxBreakdown.savings * 20)}</p>
-                        <AmountInWords amount={taxBreakdown.savings * 20} className="text-sm opacity-90 mt-2" variant="light" />
-                        <p className="text-sm opacity-90 mt-2">
-                            Old-regime home-loan tax savings, assuming similar deductions over a 20-year tenure
-                        </p>
-                    </div>
+                    {/* 20-Year Projection — only meaningful when the old regime (with its home-loan
+                        deductions) is the recommended choice and there is an actual saving */}
+                    {taxBreakdown.recommendedRegime === 'old' && taxBreakdown.savings > 0 && (
+                        <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow">
+                            <h3 className="text-lg font-bold mb-2">20-Year Cumulative Savings (Old Regime)</h3>
+                            <p className="text-4xl font-bold">{formatIndianCurrency(taxBreakdown.savings * 20)}</p>
+                            <AmountInWords amount={taxBreakdown.savings * 20} className="text-sm opacity-90 mt-2" variant="light" />
+                            <p className="text-sm opacity-90 mt-2">
+                                Old-regime home-loan tax savings, assuming similar deductions over a 20-year tenure
+                            </p>
+                        </div>
+                    )}
 
                     {/* Joint Loan Benefits */}
                     {jointBreakdown && (
