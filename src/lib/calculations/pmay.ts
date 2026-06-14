@@ -107,19 +107,23 @@ export function calculatePMAYSubsidy(
     const subsidisedRate = Math.max(0, interestRate - band.subsidyRatePoints);
     const emiAtMarketRate = calculateEMI(eligibleLoan, interestRate, subsidyTenure);
     const emiAtSubsidizedRate = calculateEMI(eligibleLoan, subsidisedRate, subsidyTenure);
-    const savingsPerMonth = emiAtMarketRate - emiAtSubsidizedRate;
+    const grossSavingsPerMonth = emiAtMarketRate - emiAtSubsidizedRate;
 
     const monthlyDiscount = config.discountRate / 12;
-    let subsidyNPV = 0;
+    let grossSubsidyNPV = 0;
     for (let month = 1; month <= subsidyTenure * 12; month++) {
-        subsidyNPV += savingsPerMonth / Math.pow(1 + monthlyDiscount, month);
+        grossSubsidyNPV += grossSavingsPerMonth / Math.pow(1 + monthlyDiscount, month);
     }
 
-    // Apply the statutory NPV ceiling (Infinity for schemes without one).
-    subsidyNPV = Math.min(subsidyNPV, config.maxSubsidyNPV);
+    // Apply the statutory NPV ceiling (Infinity for schemes without one). When the
+    // cap binds, scale the monthly saving and the effective-rate reduction by the
+    // same ratio so all three headline figures reconcile to the capped benefit.
+    const subsidyNPV = Math.min(grossSubsidyNPV, config.maxSubsidyNPV);
+    const capRatio = grossSubsidyNPV > 0 ? subsidyNPV / grossSubsidyNPV : 0;
+    const savingsPerMonth = grossSavingsPerMonth * capRatio;
 
     // Effective rate blends the subsidy across the whole loan (subsidy only on the eligible slice).
-    const effectiveRate = interestRate - band.subsidyRatePoints * (eligibleLoan / loanAmount);
+    const effectiveRate = interestRate - band.subsidyRatePoints * (eligibleLoan / loanAmount) * capRatio;
 
     return {
         eligible: true,

@@ -250,10 +250,23 @@ export function PMAYCalculator({
 
             {/* Results */}
             {result && (
-                <div className="space-y-6">
-                    <p className="text-xs text-gray-500 text-center">
-                        Scheme: <span className="font-medium text-gray-700">{getPMAYScheme(result.scheme).label}</span>
-                    </p>
+                <ResultView result={result} marketRate={watch('interestRate')} />
+            )}
+        </div>
+    );
+}
+
+/** Renders a computed PMAY result. Driven by the result's own scheme so the
+ *  scheme-dependent copy never drifts from the numbers (e.g. after the toggle
+ *  is flipped but before the form is re-submitted). */
+function ResultView({ result, marketRate }: { result: PMAYResult; marketRate: number }) {
+    const resultConfig = getPMAYScheme(result.scheme);
+
+    return (
+        <div className="space-y-6">
+            <p className="text-xs text-gray-500 text-center">
+                Scheme: <span className="font-medium text-gray-700">{resultConfig.label}</span>
+            </p>
                     {result.eligible ? (
                         <>
                             {/* Eligibility Status */}
@@ -291,7 +304,7 @@ export function PMAYCalculator({
                                         {result.effectiveRate.toFixed(2)}%
                                     </p>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        vs {watch('interestRate')}% market rate
+                                        vs {marketRate}% market rate
                                     </p>
                                 </div>
                             </div>
@@ -328,13 +341,13 @@ export function PMAYCalculator({
                             {/* Comparison Table */}
                             <div className="bg-white p-6 rounded-lg shadow">
                                 <h3 className="text-lg font-bold text-gray-900 mb-1">
-                                    {activeConfig.label} — Category Bands
+                                    {resultConfig.label} — Category Bands
                                 </h3>
                                 <p className="text-xs text-gray-500 mb-4">
-                                    House value ≤ {formatToLakhsCrores(activeConfig.maxPropertyValue)}
-                                    {Number.isFinite(activeConfig.maxLoanForScheme) && (
-                                        <> · Loan ≤ {formatToLakhsCrores(activeConfig.maxLoanForScheme)}</>
-                                    )} · Subsidy horizon {activeConfig.subsidyTenureCap} yrs
+                                    House value ≤ {formatToLakhsCrores(resultConfig.maxPropertyValue)}
+                                    {Number.isFinite(resultConfig.maxLoanForScheme) && (
+                                        <> · Loan ≤ {formatToLakhsCrores(resultConfig.maxLoanForScheme)}</>
+                                    )} · Subsidy horizon {resultConfig.subsidyTenureCap} yrs
                                 </p>
                                 <div className="overflow-x-auto">
                                     <table className="min-w-full divide-y divide-gray-200">
@@ -347,7 +360,7 @@ export function PMAYCalculator({
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
-                                            {activeConfig.bands.map((band) => (
+                                            {resultConfig.bands.map((band) => (
                                                 <tr key={band.category} className={band.category === result.category ? 'bg-green-50' : ''}>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                         {band.category}
@@ -392,8 +405,6 @@ export function PMAYCalculator({
                             </div>
                         </div>
                     )}
-                </div>
-            )}
         </div>
     );
 }
