@@ -10,6 +10,7 @@ import { z } from 'zod';
 import {
     generateAmortizationSchedule,
     generateScheduleWithLumpSum,
+    generateScheduleWithReducedEMI,
     compareSchedules
 } from '@/lib/calculations/amortization';
 import { formatIndianCurrency } from '@/lib/utils';
@@ -28,6 +29,29 @@ const prepaymentFormSchema = z.object({
 
 type PrepaymentFormData = z.infer<typeof prepaymentFormSchema>;
 
+/** Build the prepayment schedule (one entry for lump-sum, recurring entries otherwise). */
+function buildPrepayments(data: PrepaymentFormData): Array<{ month: number; amount: number }> {
+    if (data.prepaymentType === 'lump-sum') {
+        return [{ month: data.startMonth, amount: data.prepaymentAmount }];
+    }
+    const frequency = data.prepaymentType === 'monthly' ? 1 : 12;
+    const payments: Array<{ month: number; amount: number }> = [];
+    for (let m = data.startMonth; m <= data.tenureYears * 12; m += frequency) {
+        payments.push({ month: m, amount: data.prepaymentAmount });
+    }
+    return payments;
+}
+
+/** Snapshot of the inputs/outputs at submit time, so result cards never drift from live form state. */
+interface PrepaymentResultMeta {
+    mode: 'reduce-tenure' | 'reduce-emi';
+    originalEMI: number;
+    newEMI: number;
+    totalExtraPaid: number;
+    prepaymentAmount: number;
+    prepaymentType: 'lump-sum' | 'monthly' | 'yearly';
+}
+
 interface PrepaymentCalculatorProps {
     defaultPrincipal?: number;
     defaultRate?: number;
@@ -42,7 +66,8 @@ export function PrepaymentCalculator({
     const [baseSchedule, setBaseSchedule] = useState<ReturnType<typeof generateAmortizationSchedule> | null>(null);
     const [prepaySchedule, setPrepaySchedule] = useState<ReturnType<typeof generateAmortizationSchedule> | null>(null);
     const [comparison, setComparison] = useState<ReturnType<typeof compareSchedules> | null>(null);
-    const [scenarios, setScenarios] = useState<Array<{ amount: number; interestSaved: number; monthsSaved: number }>>([]);
+    const [resultMeta, setResultMeta] = useState<PrepaymentResultMeta | null>(null);
+    const [scenarios, setScenarios] = useState<Array<{ amount: number; interestSaved: number; monthsSaved: number; emiReduction: number }>>([]);
 
     const {
         register,
@@ -68,57 +93,59 @@ export function PrepaymentCalculator({
 
     const onSubmit = (data: PrepaymentFormData) => {
         const base = generateAmortizationSchedule(data.principal, data.annualRate, data.tenureYears);
-        let withPrepayment;
+        const payments = buildPrepayments(data);
 
-        if (data.prepaymentType === 'lump-sum') {
-            withPrepayment = generateScheduleWithLumpSum(
-                data.principal,
-                data.annualRate,
-                data.tenureYears,
-                [{ month: data.startMonth, amount: data.prepaymentAmount }]
-            );
-        } else {
-            // For recurring, create multiple lump sum payments
-            const frequency = data.prepaymentType === 'monthly' ? 1 : 12;
-            const payments: Array<{ month: number; amount: number }> = [];
-            for (let m = data.startMonth; m <= data.tenureYears * 12; m += frequency) {
-                payments.push({ month: m, amount: data.prepaymentAmount });
-            }
-            withPrepayment = generateScheduleWithLumpSum(
-                data.principal,
-                data.annualRate,
-                data.tenureYears,
-                payments
-            );
-        }
+        const withPrepayment = data.impactPreference === 'reduce-emi'
+            ? generateScheduleWithReducedEMI(data.principal, data.annualRate, data.tenureYears, payments)
+            : generateScheduleWithLumpSum(data.principal, data.annualRate, data.tenureYears, payments);
 
         setBaseSchedule(base);
         setPrepaySchedule(withPrepayment);
         const result = compareSchedules(base, withPrepayment);
         setComparison(result);
 
-        // Generate multiple scenarios for comparison
+        const originalEMI = base.schedule[0]?.emi ?? 0;
+        const newEMI = data.impactPreference === 'reduce-emi'
+            ? (withPrepayment as ReturnType<typeof generateScheduleWithReducedEMI>).finalEMI
+            : originalEMI;
+        // Exact extra paid: only prepayments actually applied before the loan closed.
+        const totalExtraPaid = payments
+            .filter(p => p.month <= withPrepayment.schedule.length)
+            .reduce((sum, p) => sum + p.amount, 0);
+        setResultMeta({
+            mode: data.impactPreference,
+            originalEMI,
+            newEMI,
+            totalExtraPaid,
+            prepaymentAmount: data.prepaymentAmount,
+            prepaymentType: data.prepaymentType,
+        });
+
+        // Generate multiple scenarios for comparison (monthly prepayments only)
         if (data.prepaymentType === 'monthly') {
             const amounts = [5000, 10000, 15000, 20000];
             const scenarioResults = amounts.map(amount => {
-                const payments: Array<{ month: number; amount: number }> = [];
-                for (let m = 1; m <= data.tenureYears * 12; m++) {
-                    payments.push({ month: m, amount });
+                const scenarioPayments: Array<{ month: number; amount: number }> = [];
+                for (let m = data.startMonth; m <= data.tenureYears * 12; m++) {
+                    scenarioPayments.push({ month: m, amount });
                 }
-                const schedule = generateScheduleWithLumpSum(
-                    data.principal,
-                    data.annualRate,
-                    data.tenureYears,
-                    payments
-                );
+                const schedule = data.impactPreference === 'reduce-emi'
+                    ? generateScheduleWithReducedEMI(data.principal, data.annualRate, data.tenureYears, scenarioPayments)
+                    : generateScheduleWithLumpSum(data.principal, data.annualRate, data.tenureYears, scenarioPayments);
                 const comp = compareSchedules(base, schedule);
+                const emiReduction = data.impactPreference === 'reduce-emi'
+                    ? originalEMI - (schedule as ReturnType<typeof generateScheduleWithReducedEMI>).finalEMI
+                    : 0;
                 return {
                     amount,
                     interestSaved: comp.interestSaved,
                     monthsSaved: comp.monthsSaved,
+                    emiReduction,
                 };
             });
             setScenarios(scenarioResults);
+        } else {
+            setScenarios([]);
         }
     };
 
@@ -290,11 +317,19 @@ export function PrepaymentCalculator({
                             <p className="text-3xl font-bold">{formatIndianCurrency(comparison.interestSaved)}</p>
                             <AmountInWords amount={comparison.interestSaved} className="text-sm opacity-90 mt-2" variant="light" />
                         </div>
-                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow">
-                            <p className="text-sm opacity-90 mb-1">Months Saved</p>
-                            <p className="text-3xl font-bold">{comparison.monthsSaved}</p>
-                            <p className="text-sm opacity-90">({(comparison.monthsSaved / 12).toFixed(1)} years)</p>
-                        </div>
+                        {resultMeta?.mode === 'reduce-emi' ? (
+                            <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow">
+                                <p className="text-sm opacity-90 mb-1">New EMI (tenure unchanged)</p>
+                                <p className="text-3xl font-bold">{formatIndianCurrency(resultMeta.newEMI)}</p>
+                                <p className="text-sm opacity-90">↓ {formatIndianCurrency(resultMeta.originalEMI - resultMeta.newEMI)}/month lower</p>
+                            </div>
+                        ) : (
+                            <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow">
+                                <p className="text-sm opacity-90 mb-1">Months Saved</p>
+                                <p className="text-3xl font-bold">{comparison.monthsSaved}</p>
+                                <p className="text-sm opacity-90">({(comparison.monthsSaved / 12).toFixed(1)} years)</p>
+                            </div>
+                        )}
                         <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow">
                             <p className="text-sm opacity-90 mb-1">Total Savings</p>
                             <p className="text-3xl font-bold">{formatIndianCurrency(comparison.totalSaved)}</p>
@@ -341,6 +376,20 @@ export function PrepaymentCalculator({
                                         </td>
                                     </tr>
                                     <tr>
+                                        <td className="px-6 py-4 text-sm text-gray-900">Monthly EMI</td>
+                                        <td className="px-6 py-4 text-sm text-right text-gray-900">
+                                            {formatIndianCurrency(resultMeta?.originalEMI ?? 0)}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-right text-blue-600 font-medium">
+                                            {formatIndianCurrency(resultMeta?.newEMI ?? 0)}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-right text-green-600 font-medium">
+                                            {resultMeta && resultMeta.originalEMI - resultMeta.newEMI > 0
+                                                ? <>-<AmountWithTooltip amount={resultMeta.originalEMI - resultMeta.newEMI} /></>
+                                                : 'No change'}
+                                        </td>
+                                    </tr>
+                                    <tr>
                                         <td className="px-6 py-4 text-sm text-gray-900">Tenure (Months)</td>
                                         <td className="px-6 py-4 text-sm text-right text-gray-900">
                                             {baseSchedule?.schedule.length || 0}
@@ -349,7 +398,7 @@ export function PrepaymentCalculator({
                                             {prepaySchedule?.schedule.length || 0}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-right text-green-600 font-medium">
-                                            -{comparison.monthsSaved} months
+                                            {comparison.monthsSaved > 0 ? `-${comparison.monthsSaved} months` : 'No change'}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -358,18 +407,18 @@ export function PrepaymentCalculator({
                     </div>
 
                     {/* ROI Analysis */}
-                    {prepaymentAmount > 0 && prepaySchedule && (
+                    {resultMeta && resultMeta.totalExtraPaid > 0 && (
                         <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
                             <h3 className="text-lg font-bold text-gray-900 mb-3">💡 Return on Investment</h3>
                             <p className="text-sm text-gray-700 mb-2">
-                                Every ₹{prepaymentAmount.toLocaleString('en-IN')} you pay extra saves you approximately{' '}
+                                Every ₹{resultMeta.prepaymentAmount.toLocaleString('en-IN')} you pay extra saves you approximately{' '}
                                 <span className="font-bold text-blue-600">
-                                    {formatIndianCurrency((comparison.interestSaved / (prepaymentType === 'lump-sum' ? prepaymentAmount : prepaymentAmount * prepaySchedule.schedule.length)) * prepaymentAmount)}
+                                    {formatIndianCurrency((comparison.interestSaved / resultMeta.totalExtraPaid) * resultMeta.prepaymentAmount)}
                                 </span>{' '}
                                 in interest.
                             </p>
                             <p className="text-xs text-gray-600">
-                                ROI: {(((comparison.interestSaved) / (prepaymentType === 'lump-sum' ? prepaymentAmount : prepaymentAmount * prepaySchedule.schedule.length)) * 100).toFixed(1)}% over the loan tenure
+                                ROI: {((comparison.interestSaved / resultMeta.totalExtraPaid) * 100).toFixed(1)}% on ₹{resultMeta.totalExtraPaid.toLocaleString('en-IN')} total extra paid
                             </p>
                         </div>
                     )}
@@ -382,7 +431,7 @@ export function PrepaymentCalculator({
                                 {scenarios.map((scenario, index) => (
                                     <div
                                         key={index}
-                                        className={`p-4 rounded-lg border-2 ${scenario.amount === prepaymentAmount
+                                        className={`p-4 rounded-lg border-2 ${scenario.amount === resultMeta?.prepaymentAmount
                                             ? 'border-blue-500 bg-blue-50'
                                             : 'border-gray-200 bg-white'
                                             }`}
@@ -392,7 +441,9 @@ export function PrepaymentCalculator({
                                             Save {formatIndianCurrency(scenario.interestSaved)}
                                         </p>
                                         <p className="text-xs text-gray-600">
-                                            Finish {scenario.monthsSaved} months early
+                                            {resultMeta?.mode === 'reduce-emi'
+                                                ? `EMI ↓ ${formatIndianCurrency(scenario.emiReduction)}/month`
+                                                : `Finish ${scenario.monthsSaved} months early`}
                                         </p>
                                     </div>
                                 ))}
