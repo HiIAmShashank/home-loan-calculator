@@ -92,7 +92,7 @@ export function TaxBenefitsCalculator({
                 data.coBorrowerIncome,
                 data.principalPaid,
                 data.interestPaid,
-                data.other80CInvestments,
+                0.5,
                 data.isFirstTimeBuyer,
                 data.propertyValue
             );
