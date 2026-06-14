@@ -11,6 +11,7 @@ import {
     HiBuildingLibrary,
     HiChartBar,
     HiScale,
+    HiArrowsRightLeft,
     HiArrowRight,
     HiCheckCircle,
     HiSparkles,
@@ -64,6 +65,13 @@ const features = [
         description: 'Compare up to 3 loan scenarios side-by-side with visual charts.',
         to: '/comparison',
         color: 'pink',
+    },
+    {
+        icon: HiArrowsRightLeft,
+        title: 'Balance Transfer',
+        description: 'Check whether refinancing to a lower rate beats the switching costs.',
+        to: '/balance-transfer',
+        color: 'blue',
     },
 ];
 
@@ -132,7 +140,7 @@ function LandingPage() {
                         {/* Stats */}
                         <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl mx-auto">
                             <div className="text-center">
-                                <div className="text-3xl sm:text-4xl font-bold text-white mb-1">6</div>
+                                <div className="text-3xl sm:text-4xl font-bold text-white mb-1">7</div>
                                 <div className="text-sm text-blue-200">Calculators</div>
                             </div>
                             <div className="text-center">
