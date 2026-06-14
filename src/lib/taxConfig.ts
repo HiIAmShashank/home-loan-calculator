@@ -116,5 +116,9 @@ export const TAX_CONFIG: Record<FinancialYear, TaxConfig> = {
 export const DEFAULT_FINANCIAL_YEAR: FinancialYear = 'FY2025-26';
 
 export function getTaxConfig(fy: FinancialYear = DEFAULT_FINANCIAL_YEAR): TaxConfig {
-    return TAX_CONFIG[fy];
+    const config = TAX_CONFIG[fy];
+    if (!config) {
+        throw new Error(`No tax configuration for financial year "${fy}"`);
+    }
+    return config;
 }

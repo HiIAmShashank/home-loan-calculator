@@ -1,6 +1,8 @@
 /**
  * Constants for Home Loan Calculator
- * All rates and limits as per FY 2024-25
+ *
+ * Year-agnostic rates and limits. Financial-year-specific income-tax rules
+ * (slabs, standard deduction, 87A rebate, cess) live in src/lib/taxConfig.ts.
  */
 
 import type { PMAYCriteria } from './types';

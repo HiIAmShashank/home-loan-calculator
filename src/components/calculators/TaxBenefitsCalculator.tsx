@@ -21,7 +21,9 @@ const taxFormSchema = z.object({
     other80CInvestments: z.number().min(0).max(150000),
     isFirstTimeBuyer: z.boolean(),
     propertyValue: z.number().min(0),
-    loanSanctionDate: z.string().optional(),
+    loanSanctionDate: z
+        .union([z.literal(''), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a valid date')])
+        .optional(),
     isJoint: z.boolean(),
     coBorrowerIncome: z.number().min(0).optional(),
 });
@@ -64,6 +66,7 @@ export function TaxBenefitsCalculator({
     });
 
     const isJoint = watch('isJoint');
+    const isFirstTimeBuyer = watch('isFirstTimeBuyer');
     const annualIncome = watch('annualIncome');
     const principalPaid = watch('principalPaid');
     const interestPaid = watch('interestPaid');
@@ -219,21 +222,26 @@ export function TaxBenefitsCalculator({
                         {propertyValue > 0 && <AmountInWords amount={propertyValue} className="mt-1" />}
                     </div>
 
-                    {/* Loan Sanction Date (gates Section 80EEA) */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Loan Sanction Date
-                        </label>
-                        <input
-                            type="date"
-                            {...register('loanSanctionDate')}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <p className="mt-1 text-xs text-gray-500">
-                            Section 80EEA applies <strong>only</strong> to loans sanctioned between 1 Apr 2019 and 31 Mar 2022.
-                            It is unavailable for loans sanctioned after Mar 2022, so it is off unless a date inside that window is entered.
-                        </p>
-                    </div>
+                    {/* Loan Sanction Date (gates Section 80EEA; only relevant for first-time buyers) */}
+                    {isFirstTimeBuyer && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Loan Sanction Date
+                            </label>
+                            <input
+                                type="date"
+                                {...register('loanSanctionDate')}
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            {errors.loanSanctionDate && (
+                                <p className="mt-1 text-sm text-red-600">{errors.loanSanctionDate.message}</p>
+                            )}
+                            <p className="mt-1 text-xs text-gray-500">
+                                Section 80EEA applies <strong>only</strong> to loans sanctioned between 1 Apr 2019 and 31 Mar 2022.
+                                It is unavailable for loans sanctioned after Mar 2022, so it is off unless a date inside that window is entered.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Joint Loan */}
                     <div className="border-t pt-4">
