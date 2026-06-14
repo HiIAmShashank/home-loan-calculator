@@ -1,0 +1,7 @@
+# Allow only vetted dependencies to run install/build scripts.
+allowBuilds:
+  esbuild: true
+
+# Supply-chain cooldown: hold back package versions newer than 2 days (2880 min)
+# so freshly published — potentially compromised — releases are not installed.
+minimumReleaseAge: 2880

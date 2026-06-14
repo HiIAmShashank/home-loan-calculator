@@ -81,7 +81,7 @@ function RadarComparisonChartComponent({ scenarios }: RadarComparisonChartProps)
                         />
                     ))}
                     <Tooltip
-                        formatter={(value: number) => `${value}/100`}
+                        formatter={(value) => `${value}/100`}
                         contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}
                     />
                     <Legend />

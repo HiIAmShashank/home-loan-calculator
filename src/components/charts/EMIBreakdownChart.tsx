@@ -93,7 +93,7 @@ function EMIBreakdownChartComponent({ loanAmount, interestRate, tenureYears, loa
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+                    <Tooltip formatter={(value) => formatIndianCurrency(Number(value))} />
                     <Legend />
                 </PieChart>
             </ResponsiveContainer>

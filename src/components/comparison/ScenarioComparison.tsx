@@ -234,7 +234,7 @@ function ScenarioComparisonComponent({ loanInputs }: ScenarioComparisonProps) {
                             tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
                         />
                         <Tooltip
-                            formatter={(value: number) => formatIndianCurrency(value)}
+                            formatter={(value) => formatIndianCurrency(Number(value))}
                             contentStyle={{
                                 backgroundColor: '#fff',
                                 border: '1px solid #e5e7eb',
