@@ -15,6 +15,7 @@ import { Route as PrepaymentRouteImport } from './routes/prepayment'
 import { Route as PmayRouteImport } from './routes/pmay'
 import { Route as EmiRouteImport } from './routes/emi'
 import { Route as ComparisonRouteImport } from './routes/comparison'
+import { Route as BalanceTransferRouteImport } from './routes/balance-transfer'
 import { Route as AffordabilityRouteImport } from './routes/affordability'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -48,6 +49,11 @@ const ComparisonRoute = ComparisonRouteImport.update({
   path: '/comparison',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BalanceTransferRoute = BalanceTransferRouteImport.update({
+  id: '/balance-transfer',
+  path: '/balance-transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AffordabilityRoute = AffordabilityRouteImport.update({
   id: '/affordability',
   path: '/affordability',
@@ -62,6 +68,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/affordability': typeof AffordabilityRoute
+  '/balance-transfer': typeof BalanceTransferRoute
   '/comparison': typeof ComparisonRoute
   '/emi': typeof EmiRoute
   '/pmay': typeof PmayRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/affordability': typeof AffordabilityRoute
+  '/balance-transfer': typeof BalanceTransferRoute
   '/comparison': typeof ComparisonRoute
   '/emi': typeof EmiRoute
   '/pmay': typeof PmayRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/affordability': typeof AffordabilityRoute
+  '/balance-transfer': typeof BalanceTransferRoute
   '/comparison': typeof ComparisonRoute
   '/emi': typeof EmiRoute
   '/pmay': typeof PmayRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/affordability'
+    | '/balance-transfer'
     | '/comparison'
     | '/emi'
     | '/pmay'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/affordability'
+    | '/balance-transfer'
     | '/comparison'
     | '/emi'
     | '/pmay'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/affordability'
+    | '/balance-transfer'
     | '/comparison'
     | '/emi'
     | '/pmay'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AffordabilityRoute: typeof AffordabilityRoute
+  BalanceTransferRoute: typeof BalanceTransferRoute
   ComparisonRoute: typeof ComparisonRoute
   EmiRoute: typeof EmiRoute
   PmayRoute: typeof PmayRoute
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComparisonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/balance-transfer': {
+      id: '/balance-transfer'
+      path: '/balance-transfer'
+      fullPath: '/balance-transfer'
+      preLoaderRoute: typeof BalanceTransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/affordability': {
       id: '/affordability'
       path: '/affordability'
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AffordabilityRoute: AffordabilityRoute,
+  BalanceTransferRoute: BalanceTransferRoute,
   ComparisonRoute: ComparisonRoute,
   EmiRoute: EmiRoute,
   PmayRoute: PmayRoute,
