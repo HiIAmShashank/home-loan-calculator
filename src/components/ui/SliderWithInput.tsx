@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { UseFormRegister, UseFormSetValue, FieldValues, Path } from 'react-hook-form';
+import type { UseFormRegister, UseFormSetValue, FieldValues, Path, PathValue, FieldError } from 'react-hook-form';
 
 interface SliderWithInputProps<T extends FieldValues> {
     name: Path<T>;
@@ -18,7 +18,7 @@ interface SliderWithInputProps<T extends FieldValues> {
     suffix?: string; // e.g., '%', ' years'
     register: UseFormRegister<T>;
     setValue: UseFormSetValue<T>;
-    errors?: any; // Simplified to avoid deep type complexity
+    errors?: FieldError;
     formatDisplay?: (value: number) => string; // Custom formatter for display value
     className?: string;
 }
@@ -51,7 +51,7 @@ export function SliderWithInput<T extends FieldValues>({
         // Parse and validate
         const numValue = parseFloat(newValue);
         if (!isNaN(numValue) && numValue >= min && numValue <= max) {
-            setValue(name, numValue as any);
+            setValue(name, numValue as PathValue<T, Path<T>>);
         }
     };
 
@@ -63,7 +63,7 @@ export function SliderWithInput<T extends FieldValues>({
         } else {
             const clampedValue = Math.max(min, Math.min(max, numValue));
             const roundedValue = Math.round(clampedValue / step) * step;
-            setValue(name, roundedValue as any);
+            setValue(name, roundedValue as PathValue<T, Path<T>>);
             setInputValue(roundedValue.toString());
         }
     };

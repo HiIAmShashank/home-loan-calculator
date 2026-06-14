@@ -6,7 +6,7 @@
  */
 
 import { SliderWithInput } from '../ui/SliderWithInput';
-import type { UseFormRegister, UseFormSetValue, FieldErrors, FieldValues, Path } from 'react-hook-form';
+import type { UseFormRegister, UseFormSetValue, FieldErrors, FieldValues, Path, FieldError } from 'react-hook-form';
 
 interface HybridRateInputsProps<T extends FieldValues> {
     fixedPeriodMonths: number;
@@ -60,7 +60,7 @@ export function HybridRateInputs<T extends FieldValues>({
                     suffix=" months"
                     register={register}
                     setValue={setValue}
-                    errors={errors.fixedPeriodMonths as any}
+                    errors={errors.fixedPeriodMonths as FieldError | undefined}
                     formatDisplay={(val) => `${val} months (${(val / 12).toFixed(1)} years)`}
                 />
 
@@ -84,7 +84,7 @@ export function HybridRateInputs<T extends FieldValues>({
                     suffix="%"
                     register={register}
                     setValue={setValue}
-                    errors={errors.floatingRate as any}
+                    errors={errors.floatingRate as FieldError | undefined}
                 />
 
                 <SliderWithInput<T>
@@ -97,7 +97,7 @@ export function HybridRateInputs<T extends FieldValues>({
                     suffix="%"
                     register={register}
                     setValue={setValue}
-                    errors={errors.rateIncreasePercent as any}
+                    errors={errors.rateIncreasePercent as FieldError | undefined}
                 />
 
                 <SliderWithInput<T>
@@ -110,7 +110,7 @@ export function HybridRateInputs<T extends FieldValues>({
                     suffix=" months"
                     register={register}
                     setValue={setValue}
-                    errors={errors.rateChangeFrequencyMonths}
+                    errors={errors.rateChangeFrequencyMonths as FieldError | undefined}
                     formatDisplay={(val) => `${val} months (${(val / 12).toFixed(1)} years)`}
                 />
             </div>
