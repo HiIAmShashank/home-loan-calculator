@@ -30,14 +30,17 @@ const prepaymentFormSchema = z.object({
 type PrepaymentFormData = z.infer<typeof prepaymentFormSchema>;
 
 /** Build the prepayment schedule (one entry for lump-sum, recurring entries otherwise). */
-function buildPrepayments(data: PrepaymentFormData): Array<{ month: number; amount: number }> {
+function buildPrepayments(
+    data: PrepaymentFormData,
+    amount: number = data.prepaymentAmount
+): Array<{ month: number; amount: number }> {
     if (data.prepaymentType === 'lump-sum') {
-        return [{ month: data.startMonth, amount: data.prepaymentAmount }];
+        return [{ month: data.startMonth, amount }];
     }
     const frequency = data.prepaymentType === 'monthly' ? 1 : 12;
     const payments: Array<{ month: number; amount: number }> = [];
     for (let m = data.startMonth; m <= data.tenureYears * 12; m += frequency) {
-        payments.push({ month: m, amount: data.prepaymentAmount });
+        payments.push({ month: m, amount });
     }
     return payments;
 }
@@ -64,7 +67,7 @@ export function PrepaymentCalculator({
     defaultTenure = 20,
 }: PrepaymentCalculatorProps) {
     const [baseSchedule, setBaseSchedule] = useState<ReturnType<typeof generateAmortizationSchedule> | null>(null);
-    const [prepaySchedule, setPrepaySchedule] = useState<ReturnType<typeof generateAmortizationSchedule> | null>(null);
+    const [prepaySchedule, setPrepaySchedule] = useState<(ReturnType<typeof generateAmortizationSchedule> & { finalEMI?: number }) | null>(null);
     const [comparison, setComparison] = useState<ReturnType<typeof compareSchedules> | null>(null);
     const [resultMeta, setResultMeta] = useState<PrepaymentResultMeta | null>(null);
     const [scenarios, setScenarios] = useState<Array<{ amount: number; interestSaved: number; monthsSaved: number; emiReduction: number }>>([]);
@@ -125,10 +128,7 @@ export function PrepaymentCalculator({
         if (data.prepaymentType === 'monthly') {
             const amounts = [5000, 10000, 15000, 20000];
             const scenarioResults = amounts.map(amount => {
-                const scenarioPayments: Array<{ month: number; amount: number }> = [];
-                for (let m = data.startMonth; m <= data.tenureYears * 12; m++) {
-                    scenarioPayments.push({ month: m, amount });
-                }
+                const scenarioPayments = buildPrepayments(data, amount);
                 const schedule = data.impactPreference === 'reduce-emi'
                     ? generateScheduleWithReducedEMI(data.principal, data.annualRate, data.tenureYears, scenarioPayments)
                     : generateScheduleWithLumpSum(data.principal, data.annualRate, data.tenureYears, scenarioPayments);

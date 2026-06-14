@@ -55,9 +55,12 @@ export function calculateAffordability(inputs: AffordabilityInputs): Affordabili
     // ceiling), so a high earner's headroom no longer subsidises a low earner. With equal
     // incomes (and the slider at or below each cap) this reduces to the pooled figure.
     const perApplicant = foirMode === 'per-applicant';
+    const coApplicantCapacity = coApplicantIncome > 0
+        ? coApplicantIncome * (Math.min(foirPercentage, foirCapForIncome(coApplicantIncome)) / 100)
+        : 0;
     const maxAllowedEMI = perApplicant
         ? monthlyIncome * (Math.min(foirPercentage, foirCapForIncome(monthlyIncome)) / 100)
-            + coApplicantIncome * (Math.min(foirPercentage, foirCapForIncome(coApplicantIncome)) / 100)
+            + coApplicantCapacity
             - totalObligations
         : (totalIncome * (foirPercentage / 100)) - totalObligations;
 

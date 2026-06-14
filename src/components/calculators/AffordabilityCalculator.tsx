@@ -40,6 +40,8 @@ type AffordabilityFormData = z.infer<typeof affordabilitySchema>;
 export function AffordabilityCalculator() {
     const [result, setResult] = useState<AffordabilityResult | null>(null);
     const [scenarios, setScenarios] = useState<Array<AffordabilityResult & { scenario: string; foirPercentage: number }>>([]);
+    // Submit-time snapshot so result labels reflect what was computed, not live form state.
+    const [appliedFoir, setAppliedFoir] = useState<{ mode: 'pooled' | 'per-applicant'; foirPercentage: number } | null>(null);
 
     const {
         register,
@@ -70,6 +72,8 @@ export function AffordabilityCalculator() {
 
         const scenarioResults = compareAffordabilityScenarios(data);
         setScenarios(scenarioResults);
+
+        setAppliedFoir({ mode: data.foirMode, foirPercentage: data.foirPercentage });
     };
 
     // Helper to get FOIR badge color
@@ -319,7 +323,7 @@ export function AffordabilityCalculator() {
                                 <span className="font-semibold">- {formatIndianCurrency(result.monthlyBreakdown.existingObligations)}</span>
                             </div>
                             <div className="flex justify-between items-center text-blue-600">
-                                <span>Maximum EMI ({formValues.foirPercentage}% FOIR)</span>
+                                <span>Maximum EMI ({appliedFoir?.mode === 'per-applicant' ? 'per-applicant FOIR' : `${appliedFoir?.foirPercentage}% FOIR`})</span>
                                 <span className="font-semibold">- {formatIndianCurrency(result.monthlyBreakdown.maxEMI)}</span>
                             </div>
                             <div className="border-t pt-3 flex justify-between items-center">
@@ -382,7 +386,11 @@ export function AffordabilityCalculator() {
                     {/* FOIR Scenarios Comparison */}
                     {scenarios.length > 0 && (
                         <div className="bg-white border border-gray-200 rounded-lg p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">FOIR Scenarios Comparison</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1">FOIR Scenarios Comparison</h3>
+                            <p className="text-xs text-gray-500 mb-4">
+                                Computed in {appliedFoir?.mode === 'per-applicant' ? 'per-applicant' : 'pooled'} mode
+                                {appliedFoir?.mode === 'per-applicant' && ' (each applicant capped by their own income band)'}
+                            </p>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
@@ -397,7 +405,7 @@ export function AffordabilityCalculator() {
                                     </thead>
                                     <tbody>
                                         {scenarios.map((scenario, idx) => {
-                                            const isCurrent = scenario.foirPercentage === formValues.foirPercentage;
+                                            const isCurrent = scenario.foirPercentage === appliedFoir?.foirPercentage;
                                             return (
                                                 <tr
                                                     key={idx}
