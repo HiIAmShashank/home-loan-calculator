@@ -92,7 +92,7 @@ function AmortizationChartComponent({ loanAmount, interestRate, tenureYears, loa
                     <XAxis dataKey="year" stroke="#6b7280" style={{ fontSize: '12px' }} />
                     <YAxis stroke="#6b7280" style={{ fontSize: '12px' }} tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`} />
                     <Tooltip
-                        formatter={(value: number) => formatIndianCurrency(value)}
+                        formatter={(value) => formatIndianCurrency(Number(value))}
                         contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px' }}
                     />
                     <Legend wrapperStyle={{ paddingTop: '20px' }} />

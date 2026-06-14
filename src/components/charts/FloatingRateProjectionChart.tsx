@@ -56,7 +56,7 @@ function FloatingRateProjectionChartComponent({
                         tick={{ fill: '#6b7280', fontSize: 12 }}
                     />
                     <Tooltip
-                        formatter={(value: number) => formatIndianCurrency(value)}
+                        formatter={(value) => formatIndianCurrency(Number(value))}
                         contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}
                     />
                     <Legend />
