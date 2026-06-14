@@ -3,11 +3,11 @@
  * Converts numbers to Indian English words with Rupees formatting
  */
 
-import { ToWords } from 'to-words';
+import { ToWords } from 'to-words/en-IN';
 
-// Initialize ToWords with Indian locale
+// Initialize ToWords with the Indian locale only (the dedicated entry bundles
+// just en-IN instead of every locale to-words ships).
 const toWords = new ToWords({
-    localeCode: 'en-IN',
     converterOptions: {
         currency: true,
         ignoreDecimal: false,
