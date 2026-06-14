@@ -20,4 +20,16 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // TanStack Router file-route modules must export `Route` (created via
+    // createFileRoute) — the framework's file-based routing contract. These
+    // route files export the `Route` object (and sometimes their page
+    // component), which is not a real fast-refresh hazard, so the rule is a
+    // false positive here. Scoped off for routes only; it stays fully active
+    // everywhere else.
+    files: ['src/routes/**/*.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

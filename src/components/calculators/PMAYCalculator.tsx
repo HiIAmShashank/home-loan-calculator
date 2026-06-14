@@ -75,6 +75,7 @@ export function PMAYCalculator({
         },
     });
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- RHF's watch() returns un-memoizable functions; this is intended form usage with no defect.
     const annualIncome = watch('annualIncome');
     const loanAmount = watch('loanAmount');
     const propertyValue = watch('propertyValue');

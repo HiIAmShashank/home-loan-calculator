@@ -6,7 +6,7 @@
  */
 
 import { SliderWithInput } from '../ui/SliderWithInput';
-import type { UseFormRegister, UseFormSetValue, FieldErrors, FieldValues, Path } from 'react-hook-form';
+import type { UseFormRegister, UseFormSetValue, FieldErrors, FieldValues, Path, FieldError } from 'react-hook-form';
 
 interface FloatingRateInputsProps<T extends FieldValues> {
     rateIncreasePercent: number;
@@ -49,7 +49,7 @@ export function FloatingRateInputs<T extends FieldValues>({
                 suffix="%"
                 register={register}
                 setValue={setValue}
-                errors={errors.rateIncreasePercent as any}
+                errors={errors.rateIncreasePercent as FieldError | undefined}
                 className="mb-4"
             />
 
@@ -63,7 +63,7 @@ export function FloatingRateInputs<T extends FieldValues>({
                 suffix=" months"
                 register={register}
                 setValue={setValue}
-                errors={errors.rateChangeFrequencyMonths}
+                errors={errors.rateChangeFrequencyMonths as FieldError | undefined}
                 formatDisplay={(val) => `${val} months (${(val / 12).toFixed(1)} years)`}
             />
 

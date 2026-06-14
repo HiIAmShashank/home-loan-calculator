@@ -90,6 +90,7 @@ export function PrepaymentCalculator({
         },
     });
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- RHF's watch() returns un-memoizable functions; this is intended form usage with no defect.
     const prepaymentType = watch('prepaymentType');
     const prepaymentAmount = watch('prepaymentAmount');
     const principal = watch('principal');

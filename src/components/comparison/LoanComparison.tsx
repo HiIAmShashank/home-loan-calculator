@@ -12,6 +12,7 @@ import { generateAmortizationSchedule } from '@/lib/calculations/amortization';
 import { generateFloatingRateSchedule, generatePeriodicRateChanges, calculateAverageRate } from '@/lib/calculations/floatingRate';
 import { generateHybridRateSchedule, calculateHybridAverageRate } from '@/lib/calculations/hybridRate';
 import { formatIndianCurrency, formatToLakhsCrores } from '@/lib/utils';
+import type { AmortizationSchedule } from '@/lib/types';
 import { AmountInWords } from '@/components/ui/AmountInWords';
 import { ComparisonChart } from '@/components/charts/ComparisonChart';
 import { RadarComparisonChart } from '@/components/charts/RadarComparisonChart';
@@ -87,6 +88,7 @@ export function LoanComparison() {
         resolver: zodResolver(scenarioSchema),
     });
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- RHF's watch() returns un-memoizable functions; this is intended form usage with no defect.
     const watchLoanType = watch('loanType');
     const watchLoanAmount = watch('loanAmount') || 0;
 
@@ -109,7 +111,7 @@ export function LoanComparison() {
     const scenariosWithResults = scenarios.map(scenario => {
         const loanType = scenario.loanType || 'fixed';
         let emi: number;
-        let schedule: any;
+        let schedule: AmortizationSchedule;
         let averageRate = scenario.interestRate;
 
         if (loanType === 'floating' && scenario.rateIncreasePercent !== undefined && scenario.rateChangeFrequencyMonths) {

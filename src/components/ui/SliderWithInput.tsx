@@ -5,8 +5,8 @@
  * Provides bidirectional sync between slider and input box
  */
 
-import { useEffect, useState } from 'react';
-import type { UseFormRegister, UseFormSetValue, FieldValues, Path } from 'react-hook-form';
+import { useState } from 'react';
+import type { UseFormRegister, UseFormSetValue, FieldValues, Path, PathValue, FieldError } from 'react-hook-form';
 
 interface SliderWithInputProps<T extends FieldValues> {
     name: Path<T>;
@@ -18,7 +18,7 @@ interface SliderWithInputProps<T extends FieldValues> {
     suffix?: string; // e.g., '%', ' years'
     register: UseFormRegister<T>;
     setValue: UseFormSetValue<T>;
-    errors?: any; // Simplified to avoid deep type complexity
+    errors?: FieldError;
     formatDisplay?: (value: number) => string; // Custom formatter for display value
     className?: string;
 }
@@ -38,11 +38,15 @@ export function SliderWithInput<T extends FieldValues>({
     className = '',
 }: SliderWithInputProps<T>) {
     const [inputValue, setInputValue] = useState(value.toString());
+    const [prevValue, setPrevValue] = useState(value);
 
-    // Sync input value when slider value changes
-    useEffect(() => {
+    // Sync the editable input when the controlled value changes (e.g. the
+    // slider moves). Derived during render via the previous-value pattern
+    // rather than in an effect, which avoids an extra commit + cascading render.
+    if (value !== prevValue) {
+        setPrevValue(value);
         setInputValue(value.toString());
-    }, [value]);
+    }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
@@ -51,7 +55,7 @@ export function SliderWithInput<T extends FieldValues>({
         // Parse and validate
         const numValue = parseFloat(newValue);
         if (!isNaN(numValue) && numValue >= min && numValue <= max) {
-            setValue(name, numValue as any);
+            setValue(name, numValue as PathValue<T, Path<T>>);
         }
     };
 
@@ -63,7 +67,7 @@ export function SliderWithInput<T extends FieldValues>({
         } else {
             const clampedValue = Math.max(min, Math.min(max, numValue));
             const roundedValue = Math.round(clampedValue / step) * step;
-            setValue(name, roundedValue as any);
+            setValue(name, roundedValue as PathValue<T, Path<T>>);
             setInputValue(roundedValue.toString());
         }
     };
