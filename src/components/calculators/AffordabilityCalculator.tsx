@@ -28,6 +28,7 @@ const affordabilitySchema = z.object({
     interestRate: z.number().min(5).max(20),
     tenureYears: z.number().min(1).max(30),
     foirPercentage: z.number().min(40).max(60),
+    foirMode: z.enum(['pooled', 'per-applicant']),
 });
 
 type AffordabilityFormData = z.infer<typeof affordabilitySchema>;
@@ -56,6 +57,7 @@ export function AffordabilityCalculator() {
             interestRate: 8.5,
             tenureYears: 20,
             foirPercentage: 50,
+            foirMode: 'pooled',
         },
     });
 
@@ -140,6 +142,27 @@ export function AffordabilityCalculator() {
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Total Monthly Income</span>
                         <span className="text-xl font-bold text-gray-900">{formatIndianCurrency(totalIncome)}</span>
+                    </div>
+                </div>
+
+                {/* FOIR Assessment Mode */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        How to assess applicants?
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <label className="flex items-start gap-2">
+                            <input type="radio" value="pooled" {...register('foirMode')} className="mt-1" />
+                            <span className="text-sm">
+                                <span className="font-medium">Pooled</span> — single FOIR on combined income
+                            </span>
+                        </label>
+                        <label className="flex items-start gap-2">
+                            <input type="radio" value="per-applicant" {...register('foirMode')} className="mt-1" />
+                            <span className="text-sm">
+                                <span className="font-medium">Per-applicant</span> — each income capped by its own band, then combined (more conservative)
+                            </span>
+                        </label>
                     </div>
                 </div>
 

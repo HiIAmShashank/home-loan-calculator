@@ -446,6 +446,13 @@ export interface AffordabilityInputs {
     interestRate: number;
     tenureYears: number;
     foirPercentage?: number; // Fixed Obligation to Income Ratio (default 50%)
+    /**
+     * How to apply FOIR across applicants (default 'pooled'):
+     * - 'pooled': single FOIR on combined income (generous; assumes full household pooling)
+     * - 'per-applicant': each applicant's FOIR capped by their own income band, then combined
+     *   (more conservative for unequal incomes, closer to how many lenders assess)
+     */
+    foirMode?: 'pooled' | 'per-applicant';
 }
 
 export interface MonthlyBreakdown {

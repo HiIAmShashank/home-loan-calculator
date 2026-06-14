@@ -7,6 +7,22 @@ import type { AffordabilityInputs, AffordabilityResult } from '../types';
 import { calculateEMI } from './emi';
 
 /**
+ * Per-applicant FOIR ceilings by monthly income (product heuristic, not statutory).
+ * Lower earners can prudently commit a smaller share of income to EMIs, so pooling a
+ * high earner with a low earner overstates eligibility. The user's FOIR slider acts as
+ * an overall ceiling; each applicant is additionally capped by their income band.
+ */
+const FOIR_INCOME_BANDS: Array<{ maxIncome: number; foirCap: number }> = [
+    { maxIncome: 30000, foirCap: 40 },
+    { maxIncome: 75000, foirCap: 50 },
+    { maxIncome: Infinity, foirCap: 60 },
+];
+
+function foirCapForIncome(monthlyIncome: number): number {
+    return FOIR_INCOME_BANDS.find(band => monthlyIncome <= band.maxIncome)!.foirCap;
+}
+
+/**
  * Calculate maximum affordable loan amount
  * 
  * FOIR (Fixed Obligation to Income Ratio) approach:
@@ -27,13 +43,23 @@ export function calculateAffordability(inputs: AffordabilityInputs): Affordabili
         interestRate,
         tenureYears,
         foirPercentage = 50, // Default conservative
+        foirMode = 'pooled',
     } = inputs;
 
     const totalIncome = monthlyIncome + coApplicantIncome;
     const totalObligations = existingEMIs + otherObligations;
 
-    // Available monthly amount for new EMI
-    const maxAllowedEMI = (totalIncome * (foirPercentage / 100)) - totalObligations;
+    // Available monthly amount for new EMI.
+    // Pooled: a single FOIR on combined income.
+    // Per-applicant: each applicant's FOIR is capped by their own income band (slider as
+    // ceiling), so a high earner's headroom no longer subsidises a low earner. With equal
+    // incomes (and the slider at or below each cap) this reduces to the pooled figure.
+    const perApplicant = foirMode === 'per-applicant';
+    const maxAllowedEMI = perApplicant
+        ? monthlyIncome * (Math.min(foirPercentage, foirCapForIncome(monthlyIncome)) / 100)
+            + coApplicantIncome * (Math.min(foirPercentage, foirCapForIncome(coApplicantIncome)) / 100)
+            - totalObligations
+        : (totalIncome * (foirPercentage / 100)) - totalObligations;
 
     if (maxAllowedEMI <= 0) {
         return {
@@ -85,6 +111,10 @@ export function calculateAffordability(inputs: AffordabilityInputs): Affordabili
 
     // Recommendations
     const recommendations: string[] = [];
+
+    if (perApplicant && coApplicantIncome > 0) {
+        recommendations.push('Per-applicant FOIR applied: each income is capped by its own band before combining, so unequal incomes are not over-credited.');
+    }
 
     if (foirPercentage < 50) {
         recommendations.push('Very conservative approach - you have room for higher EMI if needed');
