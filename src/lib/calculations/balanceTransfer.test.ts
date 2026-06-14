@@ -77,6 +77,16 @@ describe('calculateBalanceTransfer', () => {
     expect(r.savings.breakEvenMonths * ms).toBeGreaterThanOrEqual(total)
   })
 
+  it('does not throw and reports an unserviceable switch when the EMI cannot cover the new rate', () => {
+    // Keeping a ₹52,206 EMI against ₹50L at 15% can never amortise (monthly
+    // interest alone is ₹62,500), so the solved tenure is infinite.
+    const r = calculateBalanceTransfer({ ...base, keepSameEMI: true, newInterestRate: 15 })
+
+    expect(Number.isFinite(r.newLoan.tenure)).toBe(false)
+    expect(r.recommendation).toBe(false)
+    expect(r.savings.netSavings).toBeLessThan(0)
+  })
+
   it('sums the four switching costs into costs.total', () => {
     const r = calculateBalanceTransfer({
       ...base,

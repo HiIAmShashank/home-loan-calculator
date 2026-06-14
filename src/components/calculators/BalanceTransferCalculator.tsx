@@ -24,14 +24,24 @@ const balanceTransferSchema = z.object({
     currentTenureRemaining: z.number().min(1).max(30),
     currentEMI: z.number().min(1000, 'Minimum ₹1,000').max(2000000),
     newInterestRate: z.number().min(5).max(20),
-    newTenure: z.number().min(1).max(30),
+    // Optional because keepSameEMI solves for the tenure instead. A blank input is
+    // normalised to undefined via setValueAs at the register site.
+    newTenure: z.number().min(1).max(30).optional(),
     keepSameEMI: z.boolean(),
     topUpLoan: z.number().min(0).max(50000000),
     processingFee: z.number().min(0).max(5000000),
     legalCharges: z.number().min(0).max(5000000),
     foreclosureCharges: z.number().min(0).max(5000000),
     stampDutyOnTransfer: z.number().min(0).max(5000000),
-});
+})
+    .refine((d) => d.keepSameEMI || d.newTenure !== undefined, {
+        message: 'Enter a new tenure, or check "keep the same EMI"',
+        path: ['newTenure'],
+    })
+    .refine((d) => d.currentEMI * d.currentTenureRemaining * 12 >= d.currentOutstanding, {
+        message: 'EMI × tenure must at least repay the outstanding balance',
+        path: ['currentEMI'],
+    });
 
 type BalanceTransferFormData = z.infer<typeof balanceTransferSchema>;
 
@@ -167,6 +177,7 @@ export function BalanceTransferCalculator() {
                             {...register('currentInterestRate', { valueAsNumber: true })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         />
+                        <p className="text-xs text-gray-500 mt-1">Reference only — the current loan is computed from your actual EMI above.</p>
                         {errors.currentInterestRate && (
                             <p className="text-red-500 text-sm mt-1">{errors.currentInterestRate.message}</p>
                         )}
@@ -212,7 +223,9 @@ export function BalanceTransferCalculator() {
                         <input
                             type="number"
                             disabled={keepSameEMI}
-                            {...register('newTenure', { valueAsNumber: true })}
+                            {...register('newTenure', {
+                                setValueAs: (v) => (v === '' || v === null || Number.isNaN(Number(v)) ? undefined : Number(v)),
+                            })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100 disabled:text-gray-400"
                         />
                         {keepSameEMI ? (
@@ -311,8 +324,27 @@ export function BalanceTransferCalculator() {
                 </button>
             </form>
 
+            {/* Unserviceable switch — the EMI is too low to ever amortise the new loan
+                (calculateTenure returns Infinity), so there are no meaningful results. */}
+            {result && !Number.isFinite(result.newLoan.tenure) && (
+                <div className="rounded-lg p-6 bg-red-50 border border-red-200" role="alert">
+                    <div className="flex items-start gap-3">
+                        <span className="text-2xl" role="img" aria-label="Warning">⚠️</span>
+                        <div>
+                            <p className="text-lg font-bold text-red-800">This balance transfer isn&rsquo;t serviceable</p>
+                            <p className="text-sm text-red-700 mt-1">
+                                The current EMI of {formatIndianCurrency(result.currentLoan.emi)} is too low to repay
+                                the new loan of {formatIndianCurrency(result.newLoan.amount)} at the chosen rate — it
+                                would never fully amortise. Increase the EMI, pick a lower rate, or uncheck
+                                &ldquo;keep the same EMI&rdquo; and set a new tenure.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Results */}
-            {result && (
+            {result && Number.isFinite(result.newLoan.tenure) && (
                 <div className="space-y-6">
                     {/* Recommendation Banner */}
                     <div className={`rounded-lg p-6 text-white ${result.recommendation ? 'bg-gradient-to-br from-green-500 to-green-600' : 'bg-gradient-to-br from-red-500 to-red-600'}`}>
@@ -380,7 +412,7 @@ export function BalanceTransferCalculator() {
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Savings</h3>
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">Gross Interest Saved</span>
+                                    <span className="text-gray-600">{result.savings.grossSavings < 0 ? 'Extra Interest (top-up)' : 'Gross Interest Saved'}</span>
                                     <span className="font-semibold text-gray-900">{formatIndianCurrency(result.savings.grossSavings)}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-red-600">
