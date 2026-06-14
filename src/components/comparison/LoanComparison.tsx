@@ -88,6 +88,7 @@ export function LoanComparison() {
         resolver: zodResolver(scenarioSchema),
     });
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- RHF's watch() returns un-memoizable functions; this is intended form usage with no defect.
     const watchLoanType = watch('loanType');
     const watchLoanAmount = watch('loanAmount') || 0;
 

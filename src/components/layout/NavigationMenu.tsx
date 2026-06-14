@@ -107,10 +107,14 @@ export function NavigationMenu() {
         };
     }, [isOpen]);
 
-    // Close mobile menu on route change
-    useEffect(() => {
+    // Close the mobile menu when the route changes. Derived during render via
+    // the previous-path pattern rather than in an effect, which avoids a
+    // cascading render.
+    const [prevPath, setPrevPath] = useState(currentPath);
+    if (currentPath !== prevPath) {
+        setPrevPath(currentPath);
         setIsMobileMenuOpen(false);
-    }, [currentPath]);
+    }
 
     const isActiveRoute = (path: string) => {
         if (path === '/emi') {

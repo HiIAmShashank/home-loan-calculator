@@ -5,7 +5,7 @@
  * Provides bidirectional sync between slider and input box
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { UseFormRegister, UseFormSetValue, FieldValues, Path, PathValue, FieldError } from 'react-hook-form';
 
 interface SliderWithInputProps<T extends FieldValues> {
@@ -38,11 +38,15 @@ export function SliderWithInput<T extends FieldValues>({
     className = '',
 }: SliderWithInputProps<T>) {
     const [inputValue, setInputValue] = useState(value.toString());
+    const [prevValue, setPrevValue] = useState(value);
 
-    // Sync input value when slider value changes
-    useEffect(() => {
+    // Sync the editable input when the controlled value changes (e.g. the
+    // slider moves). Derived during render via the previous-value pattern
+    // rather than in an effect, which avoids an extra commit + cascading render.
+    if (value !== prevValue) {
+        setPrevValue(value);
         setInputValue(value.toString());
-    }, [value]);
+    }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;

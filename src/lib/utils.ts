@@ -31,7 +31,7 @@ export function formatIndianNumber(num: number): string {
     const [integerPart, decimalPart] = absNum.toString().split('.');
 
     // Format integer part with Indian comma system
-    let formattedInteger = '';
+    let formattedInteger: string;
     const length = integerPart.length;
 
     if (length <= 3) {

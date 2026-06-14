@@ -63,6 +63,7 @@ export function AffordabilityCalculator() {
         },
     });
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- RHF's watch() returns un-memoizable functions; this is intended form usage with no defect.
     const formValues = watch();
     const totalIncome = (formValues.monthlyIncome || 0) + (formValues.coApplicantIncome || 0);
 

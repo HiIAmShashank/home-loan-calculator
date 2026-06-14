@@ -66,6 +66,7 @@ export function LoanDetailsForm({ onCalculate, initialValues }: LoanDetailsFormP
     const [calculationError, setCalculationError] = useState<string | null>(null);
 
     // Watch all form values for auto-calculation
+    // eslint-disable-next-line react-hooks/incompatible-library -- RHF's watch() returns un-memoizable functions; this is intended form usage with no defect.
     const propertyValue = watch('propertyValue');
     const downPaymentPercent = watch('downPaymentPercent');
     const loanTenure = watch('loanTenure');

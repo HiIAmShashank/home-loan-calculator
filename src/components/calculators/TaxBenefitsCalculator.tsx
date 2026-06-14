@@ -63,6 +63,7 @@ export function TaxBenefitsCalculator({
         },
     });
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- RHF's watch() returns un-memoizable functions; this is intended form usage with no defect.
     const isJoint = watch('isJoint');
     const isFirstTimeBuyer = watch('isFirstTimeBuyer');
     const annualIncome = watch('annualIncome');
