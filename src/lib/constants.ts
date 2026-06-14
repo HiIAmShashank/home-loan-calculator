@@ -3,9 +3,9 @@
  *
  * Year-agnostic rates and limits. Financial-year-specific income-tax rules
  * (slabs, standard deduction, 87A rebate, cess) live in src/lib/taxConfig.ts.
+ *
+ * PMAY scheme parameters are versioned by scheme in src/lib/pmayConfig.ts.
  */
-
-import type { PMAYCriteria } from './types';
 
 // ============================================================================
 // STAMP DUTY RATES (STATE-WISE)
@@ -97,51 +97,6 @@ export const LTV_LIMITS = [
 
 export const FOIR_CONSERVATIVE = 0.50; // 50%
 export const FOIR_AGGRESSIVE = 0.60; // 60%
-
-// ============================================================================
-// PMAY CRITERIA
-// ============================================================================
-
-export const PMAY_CRITERIA: Record<string, PMAYCriteria> = {
-    EWS: {
-        minIncome: 0,
-        maxIncome: 300000, // ₹3 lakh
-        // Note: Metro cities ₹45L, Non-metro ₹30L. Using metro limit as default.
-        // Verify with official PMAY-CLSS guidelines: https://pmaymis.gov.in/
-        maxPropertyValue: 4500000, // ₹45 lakh (metro cities)
-        maxCarpetArea: 30, // sq meters
-        subsidyRate: 0.065, // 6.5%
-        maxLoanForSubsidy: 600000, // ₹6 lakh
-    },
-    LIG: {
-        minIncome: 300001,
-        maxIncome: 600000, // ₹6 lakh
-        // Note: Metro cities ₹45L, Non-metro ₹30L. Using metro limit as default.
-        // Verify with official PMAY-CLSS guidelines: https://pmaymis.gov.in/
-        maxPropertyValue: 4500000, // ₹45 lakh (metro cities)
-        maxCarpetArea: 60, // sq meters
-        subsidyRate: 0.065, // 6.5%
-        maxLoanForSubsidy: 600000, // ₹6 lakh
-    },
-    MIG1: {
-        minIncome: 600001,
-        maxIncome: 1200000, // ₹12 lakh
-        maxPropertyValue: 4500000, // ₹45 lakh
-        maxCarpetArea: 160, // sq meters
-        subsidyRate: 0.04, // 4%
-        maxLoanForSubsidy: 900000, // ₹9 lakh
-    },
-    MIG2: {
-        minIncome: 1200001,
-        maxIncome: 1800000, // ₹18 lakh
-        maxPropertyValue: 4500000, // ₹45 lakh
-        maxCarpetArea: 200, // sq meters
-        subsidyRate: 0.03, // 3%
-        maxLoanForSubsidy: 1200000, // ₹12 lakh
-    },
-};
-
-export const PMAY_MAX_TENURE = 20; // 20 years for subsidy calculation
 
 // ============================================================================
 // PROPERTY TAX RATES (CITY-WISE)
