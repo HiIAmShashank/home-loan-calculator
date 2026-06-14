@@ -328,8 +328,95 @@ export function generateScheduleWithLumpSum(
 }
 
 /**
+ * Generate amortization schedule where prepayments reduce the EMI, not the tenure
+ *
+ * Unlike generateScheduleWithLumpSum (which keeps the EMI fixed and shortens the
+ * tenure), this holds the original maturity fixed: after each prepayment the EMI is
+ * recomputed over the remaining tenure on the lower outstanding balance, so the
+ * monthly instalment drops while the loan still ends at the original final month.
+ *
+ * @param principal - Loan amount in rupees
+ * @param annualRate - Annual interest rate in percentage
+ * @param tenureYears - Loan tenure in years (held fixed)
+ * @param prepayments - Array of {month, amount} prepayments
+ * @returns Amortization schedule plus finalEMI (the recomputed instalment in effect at the end)
+ */
+export function generateScheduleWithReducedEMI(
+    principal: number,
+    annualRate: number,
+    tenureYears: number,
+    prepayments: Array<{ month: number; amount: number }>
+): AmortizationSchedule & { finalEMI: number } {
+    const monthlyRate = annualRate / 12 / 100;
+    const maxMonths = tenureYears * 12;
+    const schedule: AmortizationRow[] = [];
+    const prepaymentMap = new Map(prepayments.map(p => [p.month, p.amount]));
+
+    let balance = principal;
+    let cumulativeInterest = 0;
+    let cumulativePrincipal = 0;
+    let currentEMI = calculateEMI(principal, annualRate, tenureYears);
+
+    for (let month = 1; month <= maxMonths; month++) {
+        if (balance <= 0) break;
+
+        const openingBalance = balance;
+        const interest = balance * monthlyRate;
+        let principalPaid = currentEMI - interest;
+
+        // Apply prepayment as extra principal for this month
+        const prepayment = prepaymentMap.get(month) || 0;
+        principalPaid += prepayment;
+
+        // Don't overpay
+        if (principalPaid > balance) {
+            principalPaid = balance;
+        }
+
+        const actualEMI = interest + principalPaid;
+        const closingBalance = balance - principalPaid;
+
+        cumulativeInterest += interest;
+        cumulativePrincipal += principalPaid;
+
+        const year = Math.ceil(month / 12);
+
+        schedule.push({
+            month,
+            year,
+            openingBalance: Math.round(openingBalance),
+            emi: Math.round(actualEMI),
+            interest: Math.round(interest),
+            principal: Math.round(principalPaid),
+            closingBalance: Math.round(closingBalance),
+            cumulativeInterest: Math.round(cumulativeInterest),
+            cumulativePrincipal: Math.round(cumulativePrincipal),
+        });
+
+        balance = closingBalance;
+
+        // After a prepayment, recompute the EMI over the remaining tenure so the
+        // loan still matures at the original final month (tenure held fixed).
+        if (prepayment > 0 && balance > 0) {
+            const remainingMonths = maxMonths - month;
+            if (remainingMonths > 0) {
+                currentEMI = calculateEMI(balance, annualRate, remainingMonths / 12);
+            }
+        }
+    }
+
+    return {
+        schedule,
+        totalInterest: Math.round(cumulativeInterest * 100) / 100,
+        totalPrincipal: Math.round(cumulativePrincipal * 100) / 100,
+        totalAmount: Math.round((cumulativeInterest + cumulativePrincipal) * 100) / 100,
+        finalEMI: Math.round(currentEMI * 100) / 100,
+    };
+}
+
+/**
  * Compare two amortization schedules
- * 
+ *
  * Useful for comparing scenarios (with/without prepayment, different rates, etc.)
  * 
  * @param schedule1 - First schedule
