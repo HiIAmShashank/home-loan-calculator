@@ -15,7 +15,6 @@ import { AmountWithTooltip } from '@/components/ui/AmountWithTooltip';
 
 const taxFormSchema = z.object({
     annualIncome: z.number().min(0, 'Income must be positive').max(100000000, 'Maximum income exceeded'),
-    taxRegime: z.enum(['old', 'new']),
     principalPaid: z.number().min(0).max(10000000),
     interestPaid: z.number().min(0).max(10000000),
     other80CInvestments: z.number().min(0).max(150000),
@@ -53,7 +52,6 @@ export function TaxBenefitsCalculator({
         resolver: zodResolver(taxFormSchema),
         defaultValues: {
             annualIncome: 1200000, // ₹12L default
-            taxRegime: 'old',
             principalPaid: defaultPrincipal,
             interestPaid: defaultInterest,
             other80CInvestments: 0,
@@ -75,7 +73,6 @@ export function TaxBenefitsCalculator({
     const onSubmit = (data: TaxFormData) => {
         const inputs: TaxInputs = {
             annualIncome: data.annualIncome,
-            taxRegime: data.taxRegime,
             principalPaid: data.principalPaid,
             interestPaid: data.interestPaid,
             other80CInvestments: data.other80CInvestments,
@@ -128,33 +125,6 @@ export function TaxBenefitsCalculator({
                         {errors.annualIncome && (
                             <p className="mt-1 text-sm text-red-600">{errors.annualIncome.message}</p>
                         )}
-                    </div>
-
-                    {/* Tax Regime */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Tax Regime
-                        </label>
-                        <div className="flex gap-4">
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    value="old"
-                                    {...register('taxRegime')}
-                                    className="mr-2"
-                                />
-                                <span className="text-sm">Old Regime (with deductions)</span>
-                            </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    value="new"
-                                    {...register('taxRegime')}
-                                    className="mr-2"
-                                />
-                                <span className="text-sm">New Regime (no deductions)</span>
-                            </label>
-                        </div>
                     </div>
 
                     {/* Loan Details */}
@@ -284,47 +254,57 @@ export function TaxBenefitsCalculator({
             {/* Results */}
             {taxBreakdown && (
                 <div className="space-y-6">
-                    {/* Regime Recommendation */}
-                    <div className={`p-6 rounded-lg shadow ${taxBreakdown.recommendedRegime === 'old' ? 'bg-green-50 border-2 border-green-500' : 'bg-blue-50 border-2 border-blue-500'
-                        }`}>
-                        <h3 className="text-lg font-bold mb-2">
-                            💡 Recommended: {taxBreakdown.recommendedRegime === 'old' ? 'Old Regime' : 'New Regime'}
-                        </h3>
-                        <p className="text-sm text-gray-700">
-                            {taxBreakdown.recommendedRegime === 'old'
-                                ? 'With home loan deductions, the old regime saves you more tax.'
-                                : 'Despite deductions, the new regime results in lower tax liability.'}
-                        </p>
-                    </div>
-
-                    {/* Tax Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-                            <p className="text-sm text-gray-600 mb-1">Tax Without Loan</p>
+                    {/* Regime Comparison */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Old Regime */}
+                        <div className={`p-6 rounded-lg shadow ${taxBreakdown.recommendedRegime === 'old' ? 'bg-green-50 border-2 border-green-500' : 'bg-white border border-gray-200'}`}>
+                            <div className="flex items-center justify-between mb-1">
+                                <p className="text-sm text-gray-600">Old Regime (with home loan)</p>
+                                {taxBreakdown.recommendedRegime === 'old' && (
+                                    <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded">★ Recommended</span>
+                                )}
+                            </div>
                             <p className="text-2xl font-bold text-gray-900">
-                                {formatIndianCurrency(taxBreakdown.taxWithoutLoan)}
-                            </p>
-                            <AmountInWords amount={taxBreakdown.taxWithoutLoan} className="mt-2" />
-                        </div>
-                        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-                            <p className="text-sm text-gray-600 mb-1">Tax With Loan</p>
-                            <p className="text-2xl font-bold text-blue-600">
                                 {formatIndianCurrency(taxBreakdown.taxWithLoan)}
                             </p>
                             <AmountInWords amount={taxBreakdown.taxWithLoan} className="mt-2" />
+                            {taxBreakdown.savings > 0 && (
+                                <p className="text-sm text-green-700 mt-3">
+                                    Saves {formatIndianCurrency(taxBreakdown.savings)} vs {formatIndianCurrency(taxBreakdown.taxWithoutLoan)} without the loan
+                                </p>
+                            )}
                         </div>
-                        <div className="bg-white p-6 rounded-lg shadow border border-green-200">
-                            <p className="text-sm text-gray-600 mb-1">Annual Tax Savings</p>
-                            <p className="text-2xl font-bold text-green-600">
-                                {formatIndianCurrency(taxBreakdown.savings)}
+                        {/* New Regime */}
+                        <div className={`p-6 rounded-lg shadow ${taxBreakdown.recommendedRegime === 'new' ? 'bg-blue-50 border-2 border-blue-500' : 'bg-white border border-gray-200'}`}>
+                            <div className="flex items-center justify-between mb-1">
+                                <p className="text-sm text-gray-600">New Regime</p>
+                                {taxBreakdown.recommendedRegime === 'new' && (
+                                    <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">★ Recommended</span>
+                                )}
+                            </div>
+                            <p className="text-2xl font-bold text-blue-600">
+                                {formatIndianCurrency(taxBreakdown.taxNewRegime)}
                             </p>
-                            <AmountInWords amount={taxBreakdown.savings} className="mt-2" />
+                            <AmountInWords amount={taxBreakdown.taxNewRegime} className="mt-2" />
+                            <p className="text-sm text-gray-500 mt-3">
+                                No home-loan deductions apply in the new regime.
+                            </p>
                         </div>
+                    </div>
+
+                    {/* Recommendation */}
+                    <div className={`p-4 rounded-lg ${taxBreakdown.recommendedRegime === 'old' ? 'bg-green-50' : 'bg-blue-50'}`}>
+                        <p className="text-sm text-gray-700">
+                            💡 <strong>Recommended: {taxBreakdown.recommendedRegime === 'old' ? 'Old Regime' : 'New Regime'}</strong>
+                            {taxBreakdown.recommendedRegime === 'old'
+                                ? ' — with home-loan deductions, the old regime gives the lower tax liability.'
+                                : ' — the new regime is lower even after the old regime’s home-loan deductions.'}
+                        </p>
                     </div>
 
                     {/* Deduction Breakdown */}
                     <div className="bg-white p-6 rounded-lg shadow">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">Deduction Breakdown</h3>
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Deduction Breakdown (Old Regime)</h3>
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-gray-600">Section 80C (Principal)</span>
@@ -347,15 +327,18 @@ export function TaxBenefitsCalculator({
                         </div>
                     </div>
 
-                    {/* 20-Year Projection */}
-                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow">
-                        <h3 className="text-lg font-bold mb-2">20-Year Cumulative Savings</h3>
-                        <p className="text-4xl font-bold">{formatIndianCurrency(taxBreakdown.savings * 20)}</p>
-                        <AmountInWords amount={taxBreakdown.savings * 20} className="text-sm opacity-90 mt-2" variant="light" />
-                        <p className="text-sm opacity-90 mt-2">
-                            Assuming similar deductions over 20-year loan tenure
-                        </p>
-                    </div>
+                    {/* 20-Year Projection — only meaningful when the old regime (with its home-loan
+                        deductions) is the recommended choice and there is an actual saving */}
+                    {taxBreakdown.recommendedRegime === 'old' && taxBreakdown.savings > 0 && (
+                        <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow">
+                            <h3 className="text-lg font-bold mb-2">20-Year Cumulative Savings (Old Regime)</h3>
+                            <p className="text-4xl font-bold">{formatIndianCurrency(taxBreakdown.savings * 20)}</p>
+                            <AmountInWords amount={taxBreakdown.savings * 20} className="text-sm opacity-90 mt-2" variant="light" />
+                            <p className="text-sm opacity-90 mt-2">
+                                Old-regime home-loan tax savings, assuming similar deductions over a 20-year tenure
+                            </p>
+                        </div>
+                    )}
 
                     {/* Joint Loan Benefits */}
                     {jointBreakdown && (

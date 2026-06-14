@@ -86,7 +86,8 @@ export interface AmortizationSchedule {
 
 export interface TaxInputs {
     annualIncome: number;
-    taxRegime: TaxRegime;
+    /** Informational only — the breakdown reports both regimes for comparison. */
+    taxRegime?: TaxRegime;
     principalPaid: number;
     interestPaid: number;
     isFirstTimeBuyer: boolean;
@@ -113,10 +114,15 @@ export interface TaxDeductions {
 
 export interface TaxBreakdown {
     deductions: TaxDeductions;
+    /** Old-regime tax without the home loan (other 80C investments only). */
     taxWithoutLoan: number;
+    /** Old-regime tax with the home loan deductions applied. */
     taxWithLoan: number;
+    /** Old-regime tax saved by the home loan (taxWithoutLoan − taxWithLoan). */
     savings: number;
     effectiveTaxRate: number;
+    /** New-regime tax liability (no home-loan deductions apply). */
+    taxNewRegime: number;
     recommendedRegime: TaxRegime;
 }
 
