@@ -257,7 +257,8 @@ export function calculateTaxSavings(
         taxWithoutLoan: taxOldWithoutLoan,
         taxWithLoan: taxOldWithLoan,
         savings: savingsOldRegime,
-        effectiveTaxRate: (taxOldWithLoan / annualIncome) * 100,
+        effectiveTaxRate: annualIncome > 0 ? (taxOldWithLoan / annualIncome) * 100 : 0,
+        taxNewRegime: taxNew,
         recommendedRegime,
     };
 }
