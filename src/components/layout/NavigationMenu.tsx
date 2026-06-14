@@ -89,6 +89,15 @@ export function NavigationMenu() {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouterState();
     const currentPath = router.location.pathname;
+    const [prevPath, setPrevPath] = useState(currentPath);
+
+    // Close the mobile menu when the route changes. Derived during render via
+    // the previous-path pattern rather than in an effect, which avoids a
+    // cascading render.
+    if (currentPath !== prevPath) {
+        setPrevPath(currentPath);
+        setIsMobileMenuOpen(false);
+    }
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -106,15 +115,6 @@ export function NavigationMenu() {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isOpen]);
-
-    // Close the mobile menu when the route changes. Derived during render via
-    // the previous-path pattern rather than in an effect, which avoids a
-    // cascading render.
-    const [prevPath, setPrevPath] = useState(currentPath);
-    if (currentPath !== prevPath) {
-        setPrevPath(currentPath);
-        setIsMobileMenuOpen(false);
-    }
 
     const isActiveRoute = (path: string) => {
         if (path === '/emi') {
