@@ -12,6 +12,7 @@ import {
     HiChartBar,
     HiScale,
     HiArrowsRightLeft,
+    HiHomeModern,
     HiArrowRight,
     HiCheckCircle,
     HiSparkles,
@@ -72,6 +73,13 @@ const features = [
         description: 'Check whether refinancing to a lower rate beats the switching costs.',
         to: '/balance-transfer',
         color: 'blue',
+    },
+    {
+        icon: HiHomeModern,
+        title: 'Rent vs Buy',
+        description: 'Compare buying against renting and investing the difference over time.',
+        to: '/rent-vs-buy',
+        color: 'green',
     },
 ];
 
@@ -140,7 +148,7 @@ function LandingPage() {
                         {/* Stats */}
                         <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl mx-auto">
                             <div className="text-center">
-                                <div className="text-3xl sm:text-4xl font-bold text-white mb-1">7</div>
+                                <div className="text-3xl sm:text-4xl font-bold text-white mb-1">8</div>
                                 <div className="text-sm text-blue-200">Calculators</div>
                             </div>
                             <div className="text-center">

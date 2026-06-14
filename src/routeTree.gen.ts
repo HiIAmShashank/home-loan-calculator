@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TaxBenefitsRouteImport } from './routes/tax-benefits'
+import { Route as RentVsBuyRouteImport } from './routes/rent-vs-buy'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PrepaymentRouteImport } from './routes/prepayment'
 import { Route as PmayRouteImport } from './routes/pmay'
@@ -22,6 +23,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const TaxBenefitsRoute = TaxBenefitsRouteImport.update({
   id: '/tax-benefits',
   path: '/tax-benefits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RentVsBuyRoute = RentVsBuyRouteImport.update({
+  id: '/rent-vs-buy',
+  path: '/rent-vs-buy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/pmay': typeof PmayRoute
   '/prepayment': typeof PrepaymentRoute
   '/privacy': typeof PrivacyRoute
+  '/rent-vs-buy': typeof RentVsBuyRoute
   '/tax-benefits': typeof TaxBenefitsRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/pmay': typeof PmayRoute
   '/prepayment': typeof PrepaymentRoute
   '/privacy': typeof PrivacyRoute
+  '/rent-vs-buy': typeof RentVsBuyRoute
   '/tax-benefits': typeof TaxBenefitsRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/pmay': typeof PmayRoute
   '/prepayment': typeof PrepaymentRoute
   '/privacy': typeof PrivacyRoute
+  '/rent-vs-buy': typeof RentVsBuyRoute
   '/tax-benefits': typeof TaxBenefitsRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/pmay'
     | '/prepayment'
     | '/privacy'
+    | '/rent-vs-buy'
     | '/tax-benefits'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/pmay'
     | '/prepayment'
     | '/privacy'
+    | '/rent-vs-buy'
     | '/tax-benefits'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/pmay'
     | '/prepayment'
     | '/privacy'
+    | '/rent-vs-buy'
     | '/tax-benefits'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +156,7 @@ export interface RootRouteChildren {
   PmayRoute: typeof PmayRoute
   PrepaymentRoute: typeof PrepaymentRoute
   PrivacyRoute: typeof PrivacyRoute
+  RentVsBuyRoute: typeof RentVsBuyRoute
   TaxBenefitsRoute: typeof TaxBenefitsRoute
 }
 
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/tax-benefits'
       fullPath: '/tax-benefits'
       preLoaderRoute: typeof TaxBenefitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rent-vs-buy': {
+      id: '/rent-vs-buy'
+      path: '/rent-vs-buy'
+      fullPath: '/rent-vs-buy'
+      preLoaderRoute: typeof RentVsBuyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -224,6 +244,7 @@ const rootRouteChildren: RootRouteChildren = {
   PmayRoute: PmayRoute,
   PrepaymentRoute: PrepaymentRoute,
   PrivacyRoute: PrivacyRoute,
+  RentVsBuyRoute: RentVsBuyRoute,
   TaxBenefitsRoute: TaxBenefitsRoute,
 }
 export const routeTree = rootRouteImport
