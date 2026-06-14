@@ -10,7 +10,8 @@ export type LoanType = 'floating' | 'fixed' | 'hybrid';
 export type Gender = 'male' | 'female';
 export type TaxRegime = 'old' | 'new';
 export type PrepaymentFrequency = 'monthly' | 'yearly';
-export type PMAYCategory = 'EWS' | 'LIG' | 'MIG1' | 'MIG2';
+export type PMAYCategory = 'EWS' | 'LIG' | 'MIG' | 'MIG1' | 'MIG2';
+export type PMAYScheme = 'PMAY-U-2.0-ISS' | 'CLSS-pre-2022';
 export type FOIRLevel = 'conservative' | 'moderate' | 'aggressive';
 
 // ============================================================================
@@ -288,18 +289,10 @@ export interface PMAYInputs {
     isFirstTime: boolean;
 }
 
-export interface PMAYCriteria {
-    minIncome: number;
-    maxIncome: number;
-    maxPropertyValue: number;
-    subsidyRate: number;
-    maxLoanForSubsidy: number;
-    maxCarpetArea: number;
-}
-
 export interface PMAYResult {
     eligible: boolean;
     reason?: string;
+    scheme: PMAYScheme;
     category: PMAYCategory | 'INELIGIBLE';
     subsidyNPV: number;
     effectiveRate: number;

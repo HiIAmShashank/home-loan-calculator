@@ -1,16 +1,17 @@
 /**
  * PMAYCalculator Component
- * Pradhan Mantri Awas Yojana (PMAY) - Credit Linked Subsidy Scheme
+ * Pradhan Mantri Awas Yojana (PMAY) subsidy calculator.
+ * Defaults to PMAY-Urban 2.0 (ISS); CLSS is reachable as a pre-2022 historical mode.
  */
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { PMAYInputs, PMAYResult } from '@/lib/types';
+import type { PMAYInputs, PMAYResult, PMAYScheme } from '@/lib/types';
 import { calculatePMAYSubsidy } from '@/lib/calculations/pmay';
 import { formatIndianCurrency, formatToLakhsCrores } from '@/lib/utils';
-import { PMAY_CRITERIA } from '@/lib/constants';
+import { getPMAYScheme, DEFAULT_PMAY_SCHEME } from '@/lib/pmayConfig';
 import { AmountInWords } from '@/components/ui/AmountInWords';
 
 const pmayFormSchema = z.object({
@@ -20,6 +21,7 @@ const pmayFormSchema = z.object({
     tenureYears: z.number().min(1).max(30),
     propertyValue: z.number().min(100000).max(100000000),
     isFirstTime: z.boolean(),
+    isPre2022Sanction: z.boolean(),
 });
 
 type PMAYFormData = z.infer<typeof pmayFormSchema>;
@@ -31,11 +33,27 @@ interface PMAYCalculatorProps {
     defaultPropertyValue?: number;
 }
 
+/** Resolve the active scheme from the pre-2022 historical toggle. */
+function schemeFor(isPre2022Sanction: boolean): PMAYScheme {
+    return isPre2022Sanction ? 'CLSS-pre-2022' : DEFAULT_PMAY_SCHEME;
+}
+
+/** Label the income band a household falls into under the active scheme. */
+function getIncomeCategory(scheme: PMAYScheme, income: number): string {
+    const config = getPMAYScheme(scheme);
+    const band = config.bands.find(b => income <= b.maxIncome);
+    if (!band) {
+        const ceiling = config.bands[config.bands.length - 1].maxIncome;
+        return `Not eligible (income > ₹${(ceiling / 100000).toFixed(0)}L)`;
+    }
+    return band.category;
+}
+
 export function PMAYCalculator({
-    defaultLoanAmount = 5000000,
+    defaultLoanAmount = 2000000,
     defaultRate = 9,
     defaultTenure = 20,
-    defaultPropertyValue = 6000000,
+    defaultPropertyValue = 3000000,
 }: PMAYCalculatorProps) {
     const [result, setResult] = useState<PMAYResult | null>(null);
 
@@ -47,12 +65,13 @@ export function PMAYCalculator({
     } = useForm<PMAYFormData>({
         resolver: zodResolver(pmayFormSchema),
         defaultValues: {
-            annualIncome: 800000, // ₹8L (MIG1)
+            annualIncome: 800000, // ₹8L (MIG under ISS)
             loanAmount: defaultLoanAmount,
             interestRate: defaultRate,
             tenureYears: defaultTenure,
             propertyValue: defaultPropertyValue,
             isFirstTime: true,
+            isPre2022Sanction: false,
         },
     });
 
@@ -60,6 +79,10 @@ export function PMAYCalculator({
     const loanAmount = watch('loanAmount');
     const propertyValue = watch('propertyValue');
     const isFirstTime = watch('isFirstTime');
+    const isPre2022Sanction = watch('isPre2022Sanction');
+
+    const activeScheme = schemeFor(isPre2022Sanction);
+    const activeConfig = getPMAYScheme(activeScheme);
 
     const onSubmit = (data: PMAYFormData) => {
         const inputs: PMAYInputs = {
@@ -71,42 +94,43 @@ export function PMAYCalculator({
             isFirstTime: data.isFirstTime,
         };
 
-        const subsidyResult = calculatePMAYSubsidy(inputs);
-        setResult(subsidyResult);
-    };
-
-    // Determine potential category based on income
-    const getIncomeCategory = (income: number): string => {
-        if (income <= 300000) return 'EWS (Economically Weaker Section)';
-        if (income <= 600000) return 'LIG (Low Income Group)';
-        if (income <= 1200000) return 'MIG1 (Middle Income Group 1)';
-        if (income <= 1800000) return 'MIG2 (Middle Income Group 2)';
-        return 'Not Eligible (Income > ₹18L)';
+        setResult(calculatePMAYSubsidy(inputs, schemeFor(data.isPre2022Sanction)));
     };
 
     return (
         <div className="space-y-6">
             {/* Info Banner */}
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded" role="complementary" aria-labelledby="pmay-info-heading">
-                <div className="flex">
-                    <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                    </div>
-                    <div className="ml-3">
-                        <h3 id="pmay-info-heading" className="text-sm font-medium text-blue-800">About PMAY Credit Linked Subsidy Scheme (CLSS)</h3>
-                        <div className="mt-2 text-sm text-blue-700">
-                            <p>PMAY-CLSS provides interest subsidy on home loans for first-time buyers:</p>
-                            <ul className="list-disc list-inside mt-2 space-y-1">
-                                <li>EWS/LIG: 6.5% subsidy on loans up to ₹6L</li>
-                                <li>MIG1: 4% subsidy on loans up to ₹9L</li>
-                                <li>MIG2: 3% subsidy on loans up to ₹12L</li>
-                            </ul>
+            {activeScheme === 'PMAY-U-2.0-ISS' ? (
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded" role="complementary" aria-labelledby="pmay-info-heading">
+                    <div className="flex">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="ml-3">
+                            <h3 id="pmay-info-heading" className="text-sm font-medium text-blue-800">About PMAY-Urban 2.0 — Interest Subsidy Scheme (ISS)</h3>
+                            <div className="mt-2 text-sm text-blue-700">
+                                <p>The current scheme (live since Sep 2024) gives first-time buyers an interest subsidy:</p>
+                                <ul className="list-disc list-inside mt-2 space-y-1">
+                                    <li>4% subsidy on the first ₹8L of the loan, over a 12-year horizon</li>
+                                    <li>Up to ₹1.8L total (paid as 5 yearly instalments)</li>
+                                    <li>Eligibility: house value ≤ ₹35L, loan ≤ ₹25L, household income ≤ ₹9L</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded" role="complementary" aria-labelledby="pmay-info-heading">
+                    <div className="ml-1">
+                        <h3 id="pmay-info-heading" className="text-sm font-medium text-amber-800">Historical mode: PMAY-CLSS (pre-2022 sanction)</h3>
+                        <div className="mt-2 text-sm text-amber-700">
+                            <p>CLSS closed to new applications (MIG: 31 Mar 2021; EWS/LIG: 31 Mar 2022). These figures apply <strong>only</strong> to loans sanctioned before closure — not to current applicants. EWS/LIG 6.5% on ₹6L · MIG-I 4% on ₹9L · MIG-II 3% on ₹12L.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="bg-white p-6 rounded-lg shadow">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -126,7 +150,7 @@ export function PMAYCalculator({
                             <p className="mt-1 text-sm text-red-600">{errors.annualIncome.message}</p>
                         )}
                         <p className="mt-1 text-xs text-blue-600">
-                            Your category: {getIncomeCategory(annualIncome)}
+                            Your category: {getIncomeCategory(activeScheme, annualIncome)}
                         </p>
                     </div>
 
@@ -145,7 +169,7 @@ export function PMAYCalculator({
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Property Value (₹)
+                                House / Property Value (₹)
                             </label>
                             <input
                                 type="number"
@@ -177,6 +201,9 @@ export function PMAYCalculator({
                                 {...register('tenureYears', { valueAsNumber: true })}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                             />
+                            <p className="mt-1 text-xs text-gray-500">
+                                Subsidy is computed over the first {activeConfig.subsidyTenureCap} years.
+                            </p>
                         </div>
                     </div>
 
@@ -200,6 +227,18 @@ export function PMAYCalculator({
                         </div>
                     )}
 
+                    {/* Historical scheme toggle */}
+                    <div className="flex items-center pt-2 border-t border-gray-100">
+                        <input
+                            type="checkbox"
+                            {...register('isPre2022Sanction')}
+                            className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                        />
+                        <label className="ml-2 block text-sm text-gray-700">
+                            My loan was sanctioned before 2022 (use historical PMAY-CLSS rules)
+                        </label>
+                    </div>
+
                     <button
                         type="submit"
                         className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -211,7 +250,23 @@ export function PMAYCalculator({
 
             {/* Results */}
             {result && (
-                <div className="space-y-6">
+                <ResultView result={result} marketRate={watch('interestRate')} />
+            )}
+        </div>
+    );
+}
+
+/** Renders a computed PMAY result. Driven by the result's own scheme so the
+ *  scheme-dependent copy never drifts from the numbers (e.g. after the toggle
+ *  is flipped but before the form is re-submitted). */
+function ResultView({ result, marketRate }: { result: PMAYResult; marketRate: number }) {
+    const resultConfig = getPMAYScheme(result.scheme);
+
+    return (
+        <div className="space-y-6">
+            <p className="text-xs text-gray-500 text-center">
+                Scheme: <span className="font-medium text-gray-700">{resultConfig.label}</span>
+            </p>
                     {result.eligible ? (
                         <>
                             {/* Eligibility Status */}
@@ -249,7 +304,7 @@ export function PMAYCalculator({
                                         {result.effectiveRate.toFixed(2)}%
                                     </p>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        vs {watch('interestRate')}% market rate
+                                        vs {marketRate}% market rate
                                     </p>
                                 </div>
                             </div>
@@ -275,7 +330,7 @@ export function PMAYCalculator({
                                         <span className="font-medium">{formatToLakhsCrores(result.maxLoanForSubsidy)}</span>
                                     </div>
                                     <div className="border-t pt-3 flex justify-between items-center">
-                                        <span className="font-medium text-gray-900">Total Subsidy Benefit</span>
+                                        <span className="font-medium text-gray-900">Total Subsidy Benefit (NPV)</span>
                                         <span className="text-xl font-bold text-green-600">
                                             {formatIndianCurrency(result.totalSavings || 0)}
                                         </span>
@@ -285,7 +340,15 @@ export function PMAYCalculator({
 
                             {/* Comparison Table */}
                             <div className="bg-white p-6 rounded-lg shadow">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4">PMAY Categories Comparison</h3>
+                                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                    {resultConfig.label} — Category Bands
+                                </h3>
+                                <p className="text-xs text-gray-500 mb-4">
+                                    House value ≤ {formatToLakhsCrores(resultConfig.maxPropertyValue)}
+                                    {Number.isFinite(resultConfig.maxLoanForScheme) && (
+                                        <> · Loan ≤ {formatToLakhsCrores(resultConfig.maxLoanForScheme)}</>
+                                    )} · Subsidy horizon {resultConfig.subsidyTenureCap} yrs
+                                </p>
                                 <div className="overflow-x-auto">
                                     <table className="min-w-full divide-y divide-gray-200">
                                         <thead className="bg-gray-50">
@@ -293,30 +356,26 @@ export function PMAYCalculator({
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Income Range</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subsidy Rate</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Max Loan</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Max Property</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Max Loan for Subsidy</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
-                                            {Object.entries(PMAY_CRITERIA).map(([cat, criteria]) => (
-                                                <tr key={cat} className={cat === result.category ? 'bg-green-50' : ''}>
+                                            {resultConfig.bands.map((band) => (
+                                                <tr key={band.category} className={band.category === result.category ? 'bg-green-50' : ''}>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        {cat}
-                                                        {cat === result.category && (
+                                                        {band.category}
+                                                        {band.category === result.category && (
                                                             <span className="ml-2 text-green-600">✓</span>
                                                         )}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        ₹{(criteria.minIncome / 100000).toFixed(1)}L - ₹{(criteria.maxIncome / 100000).toFixed(1)}L
+                                                        ₹{(band.minIncome / 100000).toFixed(1)}L - ₹{(band.maxIncome / 100000).toFixed(1)}L
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
-                                                        {criteria.subsidyRate}%
+                                                        {band.subsidyRatePoints}%
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        ₹{(criteria.maxLoanForSubsidy / 100000).toFixed(0)}L
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        ₹{(criteria.maxPropertyValue / 10000000).toFixed(1)}Cr
+                                                        ₹{(band.maxLoanForSubsidy / 100000).toFixed(0)}L
                                                     </td>
                                                 </tr>
                                             ))}
@@ -335,7 +394,7 @@ export function PMAYCalculator({
                                     <h3 className="text-lg font-bold text-red-800 mb-2">Not Eligible for PMAY</h3>
                                     <p className="text-sm text-red-700">{result.reason}</p>
 
-                                    {result.category && (
+                                    {result.category !== 'INELIGIBLE' && (
                                         <div className="mt-4 text-sm text-red-700">
                                             <p className="font-medium mb-2">Category: {result.category}</p>
                                             <p>Subsidy Rate: {result.subsidyRate}%</p>
@@ -346,8 +405,6 @@ export function PMAYCalculator({
                             </div>
                         </div>
                     )}
-                </div>
-            )}
         </div>
     );
 }

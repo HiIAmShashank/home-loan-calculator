@@ -1,25 +1,40 @@
 /**
  * PMAY (Pradhan Mantri Awas Yojana) Subsidy Calculations
- * Credit Linked Subsidy Scheme (CLSS) for affordable housing
+ *
+ * Defaults to the live PMAY-Urban 2.0 Interest Subsidy Scheme (ISS); the closed
+ * Credit Linked Subsidy Scheme (CLSS) is reachable only as a historical mode.
+ * Scheme parameters are versioned in src/lib/pmayConfig.ts.
  */
 
-import type { PMAYInputs, PMAYResult } from '../types';
-import { PMAY_CRITERIA, PMAY_MAX_TENURE } from '../constants';
+import type { PMAYInputs, PMAYResult, PMAYScheme } from '../types';
+import {
+    getPMAYScheme,
+    DEFAULT_PMAY_SCHEME,
+    type PMAYSchemeConfig,
+} from '../pmayConfig';
 import { calculateEMI } from './emi';
 
+/** Find the income band a household falls into, or undefined if income exceeds the top band. */
+function findBand(config: PMAYSchemeConfig, annualIncome: number) {
+    return config.bands.find(band => annualIncome <= band.maxIncome);
+}
+
 /**
- * Calculate PMAY subsidy under CLSS
- * 
- * Categories:
- * - EWS: Annual income ≤₹3L, subsidy 6.5% on loan up to ₹6L
- * - LIG: Annual income ₹3-6L, subsidy 6.5% on loan up to ₹6L
- * - MIG1: Annual income ₹6-12L, subsidy 4% on loan up to ₹9L
- * - MIG2: Annual income ₹12-18L, subsidy 3% on loan up to ₹12L
- * 
+ * Calculate the PMAY interest subsidy for the given scheme.
+ *
+ * For PMAY-U 2.0 ISS (default): a flat 4% subsidy on the first ₹8L of the loan,
+ * present-valued over a 12-year horizon at 8.5% and capped at the ₹1.5L NPV
+ * ceiling. Eligibility gates: first-time buyer, house ≤₹35L, loan ≤₹25L,
+ * household income ≤₹9L. CLSS (historical) uses its own pre-2022 bands and caps.
+ *
  * @param inputs - PMAY eligibility and loan details
+ * @param scheme - scheme version (defaults to PMAY-U 2.0 ISS)
  * @returns Subsidy calculation with NPV
  */
-export function calculatePMAYSubsidy(inputs: PMAYInputs): PMAYResult {
+export function calculatePMAYSubsidy(
+    inputs: PMAYInputs,
+    scheme: PMAYScheme = DEFAULT_PMAY_SCHEME
+): PMAYResult {
     const {
         annualIncome,
         loanAmount,
@@ -29,186 +44,97 @@ export function calculatePMAYSubsidy(inputs: PMAYInputs): PMAYResult {
         isFirstTime,
     } = inputs;
 
-    // Determine category from income
-    let pmayCategory: PMAYResult['category'];
-    if (annualIncome <= 300000) pmayCategory = 'EWS';
-    else if (annualIncome <= 600000) pmayCategory = 'LIG';
-    else if (annualIncome <= 1200000) pmayCategory = 'MIG1';
-    else if (annualIncome <= 1800000) pmayCategory = 'MIG2';
-    else {
-        return {
-            eligible: false,
-            category: 'INELIGIBLE',
-            subsidyRate: 0,
-            maxLoanForSubsidy: 0,
-            eligibleLoan: 0,
-            subsidyNPV: 0,
-            effectiveRate: interestRate,
-            savingsPerMonth: 0,
-            totalSavings: 0,
-            reason: 'Annual income exceeds ₹18L (MIG2 limit)',
-        };
-    }
+    const config = getPMAYScheme(scheme);
 
-    const criteria = PMAY_CRITERIA[pmayCategory];
+    const ineligible = (
+        category: PMAYResult['category'],
+        reason: string,
+        extra: Partial<Pick<PMAYResult, 'subsidyRate' | 'maxLoanForSubsidy'>> = {}
+    ): PMAYResult => ({
+        eligible: false,
+        scheme,
+        category,
+        subsidyRate: 0,
+        maxLoanForSubsidy: 0,
+        eligibleLoan: 0,
+        subsidyNPV: 0,
+        effectiveRate: interestRate,
+        savingsPerMonth: 0,
+        totalSavings: 0,
+        reason,
+        ...extra,
+    });
 
-    if (!criteria) {
-        return {
-            eligible: false,
-            category: pmayCategory,
-            subsidyRate: 0,
-            maxLoanForSubsidy: 0,
-            eligibleLoan: 0,
-            subsidyNPV: 0,
-            effectiveRate: interestRate,
-            savingsPerMonth: 0,
-            totalSavings: 0,
-            reason: 'Invalid category',
-        };
-    }
-
-    // Check eligibility
-    if (annualIncome < criteria.minIncome || annualIncome > criteria.maxIncome) {
-        return {
-            eligible: false,
-            category: pmayCategory,
-            subsidyRate: criteria.subsidyRate,
-            maxLoanForSubsidy: criteria.maxLoanForSubsidy,
-            eligibleLoan: 0,
-            subsidyNPV: 0,
-            effectiveRate: interestRate,
-            savingsPerMonth: 0,
-            totalSavings: 0,
-            reason: `Income not in range ₹${(criteria.minIncome / 100000).toFixed(1)}L - ₹${(criteria.maxIncome / 100000).toFixed(1)}L`,
-        };
+    const band = findBand(config, annualIncome);
+    if (!band) {
+        const ceiling = config.bands[config.bands.length - 1].maxIncome;
+        return ineligible(
+            'INELIGIBLE',
+            `Annual income exceeds the ${config.label} ceiling of ₹${(ceiling / 100000).toFixed(1)}L`
+        );
     }
 
     if (!isFirstTime) {
-        return {
-            eligible: false,
-            category: pmayCategory,
-            subsidyRate: criteria.subsidyRate,
-            maxLoanForSubsidy: criteria.maxLoanForSubsidy,
-            eligibleLoan: 0,
-            subsidyNPV: 0,
-            effectiveRate: interestRate,
-            savingsPerMonth: 0,
-            totalSavings: 0,
-            reason: 'PMAY subsidy only for first-time home buyers',
-        };
+        return ineligible(band.category, 'PMAY subsidy is only for first-time home buyers', {
+            subsidyRate: band.subsidyRatePoints,
+            maxLoanForSubsidy: band.maxLoanForSubsidy,
+        });
     }
 
-    if (propertyValue > criteria.maxPropertyValue) {
-        return {
-            eligible: false,
-            category: pmayCategory,
-            subsidyRate: criteria.subsidyRate,
-            maxLoanForSubsidy: criteria.maxLoanForSubsidy,
-            eligibleLoan: 0,
-            subsidyNPV: 0,
-            effectiveRate: interestRate,
-            savingsPerMonth: 0,
-            totalSavings: 0,
-            reason: `Property value ₹${(propertyValue / 100000).toFixed(1)}L exceeds limit ₹${(criteria.maxPropertyValue / 100000).toFixed(1)}L`,
-        };
+    if (propertyValue > config.maxPropertyValue) {
+        return ineligible(
+            band.category,
+            `Property value ₹${(propertyValue / 100000).toFixed(1)}L exceeds the ${config.label} limit of ₹${(config.maxPropertyValue / 100000).toFixed(1)}L`,
+            { subsidyRate: band.subsidyRatePoints, maxLoanForSubsidy: band.maxLoanForSubsidy }
+        );
     }
 
-    // Calculate eligible loan amount
-    const eligibleLoan = Math.min(loanAmount, criteria.maxLoanForSubsidy);
+    if (loanAmount > config.maxLoanForScheme) {
+        return ineligible(
+            band.category,
+            `Loan amount ₹${(loanAmount / 100000).toFixed(1)}L exceeds the ${config.label} eligibility limit of ₹${(config.maxLoanForScheme / 100000).toFixed(1)}L`,
+            { subsidyRate: band.subsidyRatePoints, maxLoanForSubsidy: band.maxLoanForSubsidy }
+        );
+    }
 
-    // Calculate subsidy tenure (max 20 years or actual tenure, whichever is less)
-    const subsidyTenure = Math.min(tenureYears, PMAY_MAX_TENURE);
+    // Subsidy is computed only on the first slice of the loan, over the subsidy horizon.
+    const eligibleLoan = Math.min(loanAmount, band.maxLoanForSubsidy);
+    const subsidyTenure = Math.min(tenureYears, config.subsidyTenureCap);
 
-    // Calculate NPV of subsidy
-    // Subsidy = Interest differential on eligible loan for subsidy tenure
+    // NPV of the interest subsidy = present value of the EMI differential between
+    // the market rate and the subsidised (rate − subsidy points) rate, on the
+    // eligible loan slice, discounted at the scheme's discount rate.
+    const subsidisedRate = Math.max(0, interestRate - band.subsidyRatePoints);
     const emiAtMarketRate = calculateEMI(eligibleLoan, interestRate, subsidyTenure);
-    const emiAtSubsidizedRate = calculateEMI(eligibleLoan, interestRate - criteria.subsidyRate, subsidyTenure);
+    const emiAtSubsidizedRate = calculateEMI(eligibleLoan, subsidisedRate, subsidyTenure);
+    const grossSavingsPerMonth = emiAtMarketRate - emiAtSubsidizedRate;
 
-    // NPV of subsidy (present value of interest differential)
-    // Using a discount rate of 8% (typical)
-    const discountRate = 0.08;
-    const monthlyDiscount = discountRate / 12;
-    let subsidyNPV = 0;
-
+    const monthlyDiscount = config.discountRate / 12;
+    let grossSubsidyNPV = 0;
     for (let month = 1; month <= subsidyTenure * 12; month++) {
-        const monthlyDiff = emiAtMarketRate - emiAtSubsidizedRate;
-        const pv = monthlyDiff / Math.pow(1 + monthlyDiscount, month);
-        subsidyNPV += pv;
+        grossSubsidyNPV += grossSavingsPerMonth / Math.pow(1 + monthlyDiscount, month);
     }
 
-    // Effective interest rate after subsidy
-    const effectiveRate = interestRate - (criteria.subsidyRate * (eligibleLoan / loanAmount));
+    // Apply the statutory NPV ceiling (Infinity for schemes without one). When the
+    // cap binds, scale the monthly saving and the effective-rate reduction by the
+    // same ratio so all three headline figures reconcile to the capped benefit.
+    const subsidyNPV = Math.min(grossSubsidyNPV, config.maxSubsidyNPV);
+    const capRatio = grossSubsidyNPV > 0 ? subsidyNPV / grossSubsidyNPV : 0;
+    const savingsPerMonth = grossSavingsPerMonth * capRatio;
+
+    // Effective rate blends the subsidy across the whole loan (subsidy only on the eligible slice).
+    const effectiveRate = interestRate - band.subsidyRatePoints * (eligibleLoan / loanAmount) * capRatio;
 
     return {
         eligible: true,
-        category: pmayCategory,
-        subsidyRate: criteria.subsidyRate,
-        maxLoanForSubsidy: criteria.maxLoanForSubsidy,
+        scheme,
+        category: band.category,
+        subsidyRate: band.subsidyRatePoints,
+        maxLoanForSubsidy: band.maxLoanForSubsidy,
         eligibleLoan,
         subsidyNPV,
         effectiveRate,
-        savingsPerMonth: emiAtMarketRate - emiAtSubsidizedRate,
-        totalSavings: subsidyNPV * (subsidyTenure / tenureYears),
+        savingsPerMonth,
+        totalSavings: subsidyNPV,
     };
-}
-
-/**
- * Check PMAY eligibility without full calculation
- */
-export function checkPMAYEligibility(
-    annualIncome: number,
-    propertyValue: number,
-    isFirstTime: boolean
-): { eligible: boolean; category?: string; reason?: string } {
-    if (!isFirstTime) {
-        return { eligible: false, reason: 'Only for first-time home buyers' };
-    }
-
-    let category: string;
-
-    if (annualIncome <= 300000) category = 'EWS';
-    else if (annualIncome <= 600000) category = 'LIG';
-    else if (annualIncome <= 1200000) category = 'MIG1';
-    else if (annualIncome <= 1800000) category = 'MIG2';
-    else {
-        return { eligible: false, reason: 'Income exceeds ₹18L' };
-    }
-
-    const criteria = PMAY_CRITERIA[category];
-
-    if (propertyValue > criteria.maxPropertyValue) {
-        return {
-            eligible: false,
-            category,
-            reason: `Property value exceeds ₹${(criteria.maxPropertyValue / 10000000).toFixed(1)}Cr for ${category}`,
-        };
-    }
-
-    return { eligible: true, category };
-}
-
-/**
- * Compare subsidy across all PMAY categories
- */
-export function compareAcrossCategories(
-    loanAmount: number,
-    interestRate: number,
-    tenureYears: number,
-    propertyValue: number
-): Array<PMAYResult> {
-    const categories = ['EWS', 'LIG', 'MIG1', 'MIG2'];
-
-    return categories.map(cat => {
-        const criteria = PMAY_CRITERIA[cat];
-        const result = calculatePMAYSubsidy({
-            annualIncome: (criteria.minIncome + criteria.maxIncome) / 2, // Use midpoint
-            loanAmount,
-            interestRate,
-            tenureYears,
-            propertyValue,
-            isFirstTime: true,
-        });
-
-        return result;
-    });
 }
