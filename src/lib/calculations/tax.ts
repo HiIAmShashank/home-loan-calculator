@@ -10,12 +10,31 @@ import {
     SECTION_24B_LIMIT_SELF_OCCUPIED,
     SECTION_80EEA_LIMIT,
     SECTION_80EEA_PROPERTY_VALUE_LIMIT,
-    TAX_SLABS_OLD,
-    TAX_SLABS_NEW,
-    STANDARD_DEDUCTION,
-    CESS_RATE,
 } from '../constants';
+import { getTaxConfig, DEFAULT_FINANCIAL_YEAR } from '../taxConfig';
+import type { FinancialYear, TaxSlab } from '../taxConfig';
 import type { DeductionResult, TaxInputs, TaxBreakdown, TaxRegime } from '../types';
+
+/**
+ * Compute slab tax on a taxable income against a progressive slab table.
+ */
+function computeSlabTax(taxableIncome: number, slabs: TaxSlab[]): number {
+    let tax = 0;
+    let remaining = taxableIncome;
+
+    for (const slab of slabs) {
+        if (remaining <= 0) break;
+
+        const slabAmount = slab.max === Infinity
+            ? remaining
+            : Math.min(remaining, slab.max - slab.min);
+
+        tax += slabAmount * slab.rate;
+        remaining -= slabAmount;
+    }
+
+    return tax;
+}
 
 /**
  * Calculate Section 80C deduction (Principal repayment)
@@ -99,81 +118,57 @@ export function calculate80EEA(
 
 /**
  * Calculate tax under old regime
- * 
- * FY 2024-25 Slabs:
- * ₹0-2.5L: 0%
- * ₹2.5-5L: 5%
- * ₹5-10L: 20%
- * Above ₹10L: 30%
- * Plus 4% cess
- * 
+ *
+ * Slabs, standard deduction and cess are sourced from the FY-keyed tax config.
+ *
  * @param income - Gross income
  * @param deductions - Total deductions (80C + 24b + 80EEA + others)
+ * @param fy - Financial year (defaults to the current default FY)
  * @returns Tax amount
  */
 export function calculateTaxOld(
     income: number,
-    deductions: number = 0
+    deductions: number = 0,
+    fy: FinancialYear = DEFAULT_FINANCIAL_YEAR
 ): number {
+    const config = getTaxConfig(fy);
+    const regime = config.old;
+
     // Standard deduction applies
-    const taxableIncome = Math.max(0, income - deductions - STANDARD_DEDUCTION);
+    const taxableIncome = Math.max(0, income - deductions - regime.standardDeduction);
 
-    let tax = 0;
-    let remaining = taxableIncome;
+    let tax = computeSlabTax(taxableIncome, regime.slabs);
 
-    for (const slab of TAX_SLABS_OLD) {
-        if (remaining <= 0) break;
-
-        const slabAmount = slab.max === Infinity
-            ? remaining
-            : Math.min(remaining, slab.max - slab.min);
-
-        tax += slabAmount * slab.rate;
-        remaining -= slabAmount;
-    }
-
-    // Add Health & Education Cess (4%)
-    tax = tax * (1 + CESS_RATE);
+    // Add Health & Education Cess
+    tax = tax * (1 + config.cessRate);
 
     return Math.round(tax);
 }
 
 /**
  * Calculate tax under new regime
- * 
- * FY 2024-25 Slabs:
- * ₹0-3L: 0%
- * ₹3-6L: 5%
- * ₹6-9L: 10%
- * ₹9-12L: 15%
- * ₹12-15L: 20%
- * Above ₹15L: 30%
- * 
- * NOTE: NO deductions allowed except standard deduction
- * 
+ *
+ * Slabs, standard deduction and cess are sourced from the FY-keyed tax config.
+ * No deductions are allowed except the standard deduction.
+ *
  * @param income - Gross income
+ * @param fy - Financial year (defaults to the current default FY)
  * @returns Tax amount
  */
-export function calculateTaxNew(income: number): number {
+export function calculateTaxNew(
+    income: number,
+    fy: FinancialYear = DEFAULT_FINANCIAL_YEAR
+): number {
+    const config = getTaxConfig(fy);
+    const regime = config.new;
+
     // Only standard deduction applies in new regime
-    const taxableIncome = Math.max(0, income - STANDARD_DEDUCTION);
+    const taxableIncome = Math.max(0, income - regime.standardDeduction);
 
-    let tax = 0;
-    let remaining = taxableIncome;
+    let tax = computeSlabTax(taxableIncome, regime.slabs);
 
-    for (const slab of TAX_SLABS_NEW) {
-        if (remaining <= 0) break;
-
-        const slabAmount = slab.max === Infinity
-            ? remaining
-            : Math.min(remaining, slab.max - slab.min);
-
-        tax += slabAmount * slab.rate;
-        remaining -= slabAmount;
-    }
-
-    // Add Health & Education Cess (4%)
-    tax = tax * (1 + CESS_RATE);
+    // Add Health & Education Cess
+    tax = tax * (1 + config.cessRate);
 
     return Math.round(tax);
 }
@@ -186,7 +181,10 @@ export function calculateTaxNew(income: number): number {
  * @param inputs - Complete tax calculation inputs
  * @returns Complete tax breakdown with savings
  */
-export function calculateTaxSavings(inputs: TaxInputs): TaxBreakdown {
+export function calculateTaxSavings(
+    inputs: TaxInputs,
+    fy: FinancialYear = DEFAULT_FINANCIAL_YEAR
+): TaxBreakdown {
     const {
         annualIncome,
         principalPaid,
@@ -197,7 +195,7 @@ export function calculateTaxSavings(inputs: TaxInputs): TaxBreakdown {
     } = inputs;
 
     // Calculate tax under new regime (no deductions)
-    const taxNew = calculateTaxNew(annualIncome);
+    const taxNew = calculateTaxNew(annualIncome, fy);
 
     // Calculate deductions under old regime
     const section80C = calculate80C(principalPaid, other80CInvestments);
@@ -207,10 +205,10 @@ export function calculateTaxSavings(inputs: TaxInputs): TaxBreakdown {
     const totalDeductions = section80C.deduction + section24b + section80EEA;
 
     // Calculate tax under old regime with home loan deductions
-    const taxOldWithLoan = calculateTaxOld(annualIncome, totalDeductions);
+    const taxOldWithLoan = calculateTaxOld(annualIncome, totalDeductions, fy);
 
     // Calculate tax under old regime without home loan (only other investments)
-    const taxOldWithoutLoan = calculateTaxOld(annualIncome, other80CInvestments);
+    const taxOldWithoutLoan = calculateTaxOld(annualIncome, other80CInvestments, fy);
 
     // Determine which regime is better
     const oldRegimeBetter = taxOldWithLoan < taxNew;

@@ -59,27 +59,11 @@ export const GST_RATE = 0.05; // 5% on construction value for under-construction
 export const DEFAULT_CONSTRUCTION_RATIO = 0.7; // 70% construction, 30% land
 
 // ============================================================================
-// TAX SLABS (FY 2024-25)
+// TAX SLABS, STANDARD DEDUCTION, 87A REBATE & CESS
 // ============================================================================
-
-export const TAX_SLABS_OLD = [
-    { min: 0, max: 250000, rate: 0 },
-    { min: 250000, max: 500000, rate: 0.05 },
-    { min: 500000, max: 1000000, rate: 0.20 },
-    { min: 1000000, max: Infinity, rate: 0.30 },
-];
-
-export const TAX_SLABS_NEW = [
-    { min: 0, max: 300000, rate: 0 },
-    { min: 300000, max: 600000, rate: 0.05 },
-    { min: 600000, max: 900000, rate: 0.10 },
-    { min: 900000, max: 1200000, rate: 0.15 },
-    { min: 1200000, max: 1500000, rate: 0.20 },
-    { min: 1500000, max: Infinity, rate: 0.30 },
-];
-
-export const STANDARD_DEDUCTION = 50000; // ₹50,000
-export const CESS_RATE = 0.04; // 4% Health & Education Cess
+// Year-specific income-tax rules live in the FY-keyed tax config
+// (src/lib/taxConfig.ts) so an annual Budget change is a data edit, not code
+// surgery. Only year-agnostic deduction caps remain here.
 
 // ============================================================================
 // TAX DEDUCTION LIMITS
